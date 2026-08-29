@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from template_service.contracts.pagination import (
+from health_dashboard_service.contracts.pagination import (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
     PaginationParameters,
