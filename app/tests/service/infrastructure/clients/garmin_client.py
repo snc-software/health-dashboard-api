@@ -1,12 +1,11 @@
 """Client wrapper for calling this service's own /garmin/* endpoints from tests."""
 
-from datetime import date
-
 import httpx
 
 from health_dashboard_service.contracts.garmin import (
     AuthenticateGarminRequest,
     SubmitGarminMfaRequest,
+    UpsertGarminDailyStatRequest,
 )
 
 from .base_api_client import BaseApiClient
@@ -29,9 +28,9 @@ async def submit_garmin_mfa(
     return await client.send(req)
 
 
-async def refresh_garmin_data(
-    client: httpx.AsyncClient, stat_date: date | None = None
+async def upsert_garmin_daily_stat(
+    client: httpx.AsyncClient, request: UpsertGarminDailyStatRequest
 ) -> httpx.Response:
-    params = {"stat_date": stat_date.isoformat()} if stat_date else None
-    req = BaseApiClient.get_base_request(client, "POST", "/garmin/refresh", params=params)
+    payload = request.model_dump(by_alias=True, mode="json")
+    req = BaseApiClient.get_base_request(client, "POST", "/garmin-daily-stats", json=payload)
     return await client.send(req)

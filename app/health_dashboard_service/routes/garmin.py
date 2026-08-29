@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, status
 from fastapi.exceptions import HTTPException
@@ -11,6 +10,7 @@ from ..contracts.garmin import (
     GarminAuthenticateResponse,
     GarminDailyStatResponse,
     SubmitGarminMfaRequest,
+    UpsertGarminDailyStatRequest,
 )
 from ..features.garmin import garmin_mapper as mapper
 from ..features.garmin.domain import garmin_service as service
@@ -129,11 +129,11 @@ def submit_garmin_mfa(body: SubmitGarminMfaRequest) -> None:
 
 
 @router.post(
-    "/garmin/refresh",
-    summary="Refresh daily Garmin stats",
+    "/garmin-daily-stats",
+    summary="Upsert daily Garmin stats for a date",
     description=(
-        "Uses the stored Garmin session to pull the day's summary stats and upserts them "
-        "into Postgres, without requiring credentials again."
+        "Uses the stored Garmin session to pull the requested date's summary stats and upserts "
+        "them into Postgres, without requiring credentials again."
     ),
     tags=OAPI.GARMIN,
     response_model=GarminDailyStatResponse,
@@ -144,18 +144,17 @@ def submit_garmin_mfa(body: SubmitGarminMfaRequest) -> None:
         **OAPIResponses.SERVER_ERROR,
     },
 )
-def refresh_garmin_data(stat_date: date | None = None) -> GarminDailyStatResponse:
-    resolved_date = stat_date or datetime.now(UTC).date()
-    logger.info("refresh_garmin_data called", extra={log_values.STAT_DATE: resolved_date})
+def upsert_garmin_daily_stat(body: UpsertGarminDailyStatRequest) -> GarminDailyStatResponse:
+    logger.info("upsert_garmin_daily_stat called", extra={log_values.STAT_DATE: body.stat_date})
 
     try:
-        stat = asyncio.run(service.refresh_daily_stats(resolved_date))
+        stat = asyncio.run(service.upsert_daily_stat(body.stat_date))
     except GarminSessionNotFoundError as exc:
-        logger.info("refresh_garmin_data has no stored session")
+        logger.info("upsert_garmin_daily_stat has no stored session")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except GarminServiceError as exc:
-        logger.warning("refresh_garmin_data failed: Garmin unreachable")
+        logger.warning("upsert_garmin_daily_stat failed: Garmin unreachable")
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
-    logger.info("refresh_garmin_data succeeded", extra={log_values.STAT_DATE: resolved_date})
+    logger.info("upsert_garmin_daily_stat succeeded", extra={log_values.STAT_DATE: body.stat_date})
     return mapper.map_from_domain_to_response_daily_stat(stat)

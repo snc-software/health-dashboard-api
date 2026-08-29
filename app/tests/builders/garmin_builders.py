@@ -7,6 +7,7 @@ from health_dashboard_service.contracts.garmin import (
     AuthenticateGarminRequest,
     GarminDailyStatResponse,
     SubmitGarminMfaRequest,
+    UpsertGarminDailyStatRequest,
 )
 from health_dashboard_service.features.garmin.domain.garmin_models import (
     GarminAuthenticationResultModel,
@@ -65,6 +66,10 @@ class _GarminDailyStatResponseFactory(ModelFactory[GarminDailyStatResponse]):
     __model__ = GarminDailyStatResponse
 
 
+class _UpsertGarminDailyStatRequestFactory(ModelFactory[UpsertGarminDailyStatRequest]):
+    __model__ = UpsertGarminDailyStatRequest
+
+
 class GarminAutoFixture:
     _factories: ClassVar[dict[type, Any]] = {
         GarminToken: _GarminTokenFactory,
@@ -77,6 +82,7 @@ class GarminAutoFixture:
         AuthenticateGarminRequest: _AuthenticateGarminRequestFactory,
         SubmitGarminMfaRequest: _SubmitGarminMfaRequestFactory,
         GarminDailyStatResponse: _GarminDailyStatResponseFactory,
+        UpsertGarminDailyStatRequest: _UpsertGarminDailyStatRequestFactory,
     }
 
     @staticmethod

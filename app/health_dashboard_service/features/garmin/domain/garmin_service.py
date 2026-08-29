@@ -87,7 +87,7 @@ async def _persist_token(token_data: str) -> None:
         await pc.save_changes()
 
 
-async def refresh_daily_stats(stat_date: date) -> GarminDailyStatModel:
+async def upsert_daily_stat(stat_date: date) -> GarminDailyStatModel:
     """Pull the day's summary stats from Garmin using the stored session, and upsert them."""
     async with create_scoped_persistence_controller() as pc:
         token = await reader.get_token(pc)

@@ -24,6 +24,10 @@ class SubmitGarminMfaRequest(ApiModel):
     code: str = Field(..., min_length=1, description="MFA code sent by Garmin Connect.")
 
 
+class UpsertGarminDailyStatRequest(ApiModel):
+    stat_date: date = Field(..., description="The date to pull and store Garmin summary stats for.")
+
+
 class GarminDailyStatResponse(ApiModel):
     stat_date: date
     steps: int | None

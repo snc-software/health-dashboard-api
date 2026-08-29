@@ -1,10 +1,11 @@
-"""Step implementations for the refresh-Garmin-data service test."""
+"""Step implementations for the upsert-Garmin-daily-stat service test."""
 
 from datetime import UTC, date, datetime
 
 import httpx
 from pytest_mock import MockerFixture
 
+from health_dashboard_service.contracts.garmin import UpsertGarminDailyStatRequest
 from health_dashboard_service.features.garmin.persistence.garmin_entities import (
     GARMIN_TOKEN_SINGLETON_ID,
     GarminToken,
@@ -18,14 +19,14 @@ from tests.persistence_providers.garmin_daily_stat_persistence_provider import (
 from tests.persistence_providers.garmin_token_persistence_provider import (
     GarminTokenPersistenceProvider,
 )
-from tests.service.infrastructure.clients.garmin_client import refresh_garmin_data as _call
+from tests.service.infrastructure.clients.garmin_client import (
+    upsert_garmin_daily_stat as _call,
+)
 from tests.service.infrastructure.mocks import garmin_api_mock
 
 
-async def refresh_garmin_data(
-    client: httpx.AsyncClient, stat_date: date | None = None
-) -> httpx.Response:
-    return await _call(client, stat_date)
+async def upsert_garmin_daily_stat(client: httpx.AsyncClient, stat_date: date) -> httpx.Response:
+    return await _call(client, UpsertGarminDailyStatRequest(stat_date=stat_date))
 
 
 async def a_garmin_session_has_been_established(
