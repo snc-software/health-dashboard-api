@@ -27,3 +27,8 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# Agentic 
+.standards
+plans/
+code-reviews

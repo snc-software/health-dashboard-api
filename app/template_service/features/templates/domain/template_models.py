@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class TemplateModel:
     id: UUID
     name: str

@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from ..config import Settings, get_settings
+from ...config import Settings, get_settings
 
 
 def configure_logging(settings: Settings | None = None) -> None:

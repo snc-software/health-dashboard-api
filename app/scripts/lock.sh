@@ -4,7 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-IMAGE="python:3.12-slim"
+IMAGE="python:3.14-slim"
 
 generate() {
     local extra="$1" outfile="$2" spec="."

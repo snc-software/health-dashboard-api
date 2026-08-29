@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import uuid7
 
 from ...contracts.template import CreateTemplateRequest, TemplateResponse
 from .domain.template_models import TemplateModel
@@ -33,7 +33,7 @@ def map_from_contract_to_domain(create_template_request: CreateTemplateRequest) 
     """Map from request contract CreateTemplateRequest to domain TemplateModel"""
     now = datetime.now(UTC)
     return TemplateModel(
-        id=uuid4(),
+        id=uuid7(),
         name=create_template_request.name,
         created_timestamp=now,
         updated_timestamp=now,
