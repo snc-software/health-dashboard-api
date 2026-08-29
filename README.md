@@ -1,22 +1,24 @@
-# Template Service
+# Health Dashboard API
 
-FastAPI microservice template: package-by-feature at the top level, layered
-inside each feature, Postgres-backed, Scalar API docs.
+FastAPI microservice: package-by-feature at the top level, layered inside each
+feature, Postgres-backed, Scalar API docs.
 
-Clone this to start a new service. Everything below already works; the
-`templates` feature is a worked example to copy and rename.
+Single-tenant service that connects to a user's Garmin Connect account via the
+[`garminconnect`](https://github.com/cyberjunky/python-garminconnect) package,
+without ever persisting the account's username/password — only the resulting
+session token is stored, and used to refresh daily stats afterwards.
 
 ---
 
 ## Quick start
 
 ```bash
-git clone <this-repo> my-service && cd my-service/app
+git clone <this-repo> health-dashboard-api && cd health-dashboard-api/app
 
 make install                       # creates ../.venv and installs [dev]
-cp template_service/.env.sample template_service/.env
+cp health_dashboard_service/.env.sample health_dashboard_service/.env
 cp migrations/.env.sample migrations/.env
-$EDITOR template_service/.env      # point at your database
+$EDITOR health_dashboard_service/.env      # point at your database
 
 make migrate                       # apply migrations (requires goose)
 make dev                           # http://127.0.0.1:8000/docs
@@ -45,10 +47,11 @@ protects your system Python, and it is never what you want here.
 
 ## Configuration
 
-All settings come from the environment (see `template_service/.env.sample`),
-loaded and validated by `pydantic-settings` in `template_service/config.py`.
-Settings are resolved lazily via `get_settings()`, so importing the package
-never requires a populated environment — that keeps CI and unit tests simple.
+All settings come from the environment (see
+`health_dashboard_service/.env.sample`), loaded and validated by
+`pydantic-settings` in `health_dashboard_service/config.py`. Settings are
+resolved lazily via `get_settings()`, so importing the package never requires
+a populated environment — that keeps CI and unit tests simple.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
@@ -69,7 +72,7 @@ Real `.env` files are gitignored; only `.env.sample` is committed.
 ```bash
 make dev        # reload enabled
 make run        # production-style
-make docker-build && docker run -p 8000:8000 --env-file template_service/.env template-service:local
+make docker-build && docker run -p 8000:8000 --env-file health_dashboard_service/.env health-dashboard-api:local
 ```
 
 | Endpoint | Purpose |
@@ -78,10 +81,16 @@ make docker-build && docker run -p 8000:8000 --env-file template_service/.env te
 | `/openapi.json` | OpenAPI schema |
 | `/health` | Liveness — touches no dependencies |
 | `/health/ready` | Readiness — checks Postgres, 503 when unreachable |
-| `/templates` | The example feature |
+| `POST /garmin/authenticate` | Exchange Garmin credentials for a stored session token |
+| `POST /garmin/refresh` | Pull and upsert one day's summary stats using the stored session |
 
 The app verifies database connectivity during startup, so bad credentials fail
 the deploy rather than the first user request.
+
+`routes/garmin.py`'s two handlers are synchronous (`def`, not `async def`) —
+`garminconnect` is a synchronous SDK, so these two endpoints don't propagate
+client-disconnect cancellation the way the rest of the API does; this is an
+accepted, scoped limitation (see `.standards/endpoint-standards.md`).
 
 ---
 
@@ -101,16 +110,17 @@ Discovery conventions (configured in `pyproject.toml`):
 | Service | `*_feature.py` | `*Feature` |
 
 ```bash
-pytest tests/unit_tests            # a folder
-pytest -x                          # stop at first failure
-pytest --collect-only              # show what would run
+pytest tests/unit               # a folder
+pytest -x                       # stop at first failure
+pytest --collect-only           # show what would run
 ```
 
-Unit tests cover validations, mappings and extensions only — not services.
-Service tests drive endpoints against a real Postgres via TestContainers and
-assert on the endpoint's response; they are not yet written.
+Unit tests cover validations, mappings and helpers. Service tests drive the
+`/garmin/*` endpoints against a real Postgres via TestContainers, mocking only
+the `garminconnect`-facing boundary (`infrastructure/garmin/garmin_client_factory.py`)
+— `garminconnect` itself is trusted and never mocked.
 
-Object generation uses polyfactory behind `TemplateAutoFixture.generate(Type,
+Object generation uses polyfactory behind `GarminAutoFixture.generate(Type,
 **overrides)` — pin the fields a test cares about, leave the rest anonymous.
 
 ---
@@ -135,7 +145,7 @@ then `up` again to prove rollbacks are real.
 
 ```
 app/
-  template_service/
+  health_dashboard_service/
     config.py                  Settings (pydantic-settings)
     main.py                    create_app(): middleware, handlers, routers
     contracts/                 Wire models. ApiModel gives camelCase aliases
@@ -147,6 +157,7 @@ app/
     infrastructure/
       http/                    Exception handlers
       postgres/                Engine and unit of work
+      garmin/                  Synchronous wrapper around `garminconnect`
     openapi/                   Shared tags, response declarations, schema
   migrations/                  goose SQL
   tests/
@@ -154,9 +165,9 @@ app/
 
 ### Adding a feature
 
-1. `template_service/features/<feature>/` with `domain/` and `persistence/`.
+1. `health_dashboard_service/features/<feature>/` with `domain/` and `persistence/`.
 2. A mapper — persistence entities and wire contracts must not meet directly.
-3. `template_service/routes/<feature>.py` exposing `router`. Auto-discovery
+3. `health_dashboard_service/routes/<feature>.py` exposing `router`. Auto-discovery
    picks it up; no registration needed.
 4. Contracts extend `ApiModel` so serialisation stays camelCase.
 5. Tests: `*_tests.py` for units, `*_feature.py` for routes.
@@ -173,7 +184,6 @@ app/
   guarantee for `LIMIT/OFFSET` without one.
 - **Bound every page size.** `MAX_PAGE_SIZE` is enforced in the contract.
 - **Parameterise all SQL.** No f-strings around user input, ever.
-- **Soft delete.** Reads filter `"Deleted" = FALSE`.
 
 ---
 

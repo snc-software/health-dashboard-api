@@ -19,10 +19,10 @@ lock: ## Regenerate the lock files (run after changing dependencies)
 	./scripts/lock.sh
 
 run: ## Run the API (production-style)
-	$(VENV)/bin/fastapi run template_service/main.py
+	$(VENV)/bin/fastapi run health_dashboard_service/main.py
 
 dev: ## Run the API with reload
-	$(VENV)/bin/fastapi dev template_service/main.py
+	$(VENV)/bin/fastapi dev health_dashboard_service/main.py
 
 test: ## Run the test suite
 	$(PY) -m pytest -v
@@ -49,7 +49,7 @@ migrate-down: ## Roll back the last migration
 	cd migrations && goose down
 
 docker-build: ## Build the container image
-	docker build -t template-service:local .
+	docker build -t health-dashboard-api:local .
 
 clean: ## Remove caches and build artefacts
 	rm -rf .pytest_cache .ruff_cache .mypy_cache .coverage coverage.xml htmlcov build dist *.egg-info

@@ -27,7 +27,7 @@ repos:
     rev: v1.14.1
     hooks:
       - id: mypy
-        files: ^app/template_service/
+        files: ^app/health_dashboard_service/
         args: [--config-file, app/pyproject.toml]
         additional_dependencies:
           - pydantic>=2.9
