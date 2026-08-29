@@ -61,6 +61,13 @@ jobs:
           cache: pip
           cache-dependency-path: app/requirements-dev.lock
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install goose
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
       - name: Install dependencies
         run: |
           pip install -r requirements-dev.lock
