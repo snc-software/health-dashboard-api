@@ -1,0 +1,29 @@
+# Environments
+.venv/
+venv/
+
+# Secrets — .env.sample files are tracked, real .env files never are
+.env
+*.env
+!*.env.sample
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
