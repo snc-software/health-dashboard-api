@@ -1,5 +1,7 @@
 """Step implementations for the authenticate-Garmin service test."""
 
+import uuid
+
 import httpx
 from pytest_mock import MockerFixture
 
@@ -30,6 +32,10 @@ def garmin_accepts_the_credentials(mocker: MockerFixture, token_data: str) -> No
     garmin_api_mock.configure_successful_login(mocker, token_data)
 
 
+def garmin_requires_mfa(mocker: MockerFixture, mfa_session_id: uuid.UUID) -> None:
+    garmin_api_mock.configure_mfa_required_login(mocker, mfa_session_id)
+
+
 def garmin_rejects_the_credentials(mocker: MockerFixture) -> None:
     garmin_api_mock.configure_login_rejected(mocker)
 
@@ -48,3 +54,9 @@ async def assert_token_persisted(
 
 def assert_response_status(response: httpx.Response, status_code: int) -> None:
     assert response.status_code == status_code
+
+
+def assert_response_body(response: httpx.Response, **expected_fields: object) -> None:
+    payload = response.json()
+    for field, value in expected_fields.items():
+        assert payload[field] == value

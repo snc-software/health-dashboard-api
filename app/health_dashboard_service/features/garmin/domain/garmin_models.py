@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Literal
 from uuid import UUID
 
 
@@ -7,6 +8,18 @@ from uuid import UUID
 class GarminCredentialsModel:
     email: str
     password: str
+
+
+@dataclass(frozen=True, slots=True)
+class GarminAuthenticationResultModel:
+    status: Literal["authenticated", "mfa_required"]
+    mfa_session_id: UUID | None
+
+
+@dataclass(frozen=True, slots=True)
+class GarminMfaSubmissionModel:
+    mfa_session_id: UUID
+    code: str
 
 
 @dataclass(frozen=True, slots=True)

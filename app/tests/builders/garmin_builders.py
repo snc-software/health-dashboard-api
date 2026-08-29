@@ -6,10 +6,13 @@ from polyfactory.factories.pydantic_factory import ModelFactory
 from health_dashboard_service.contracts.garmin import (
     AuthenticateGarminRequest,
     GarminDailyStatResponse,
+    SubmitGarminMfaRequest,
 )
 from health_dashboard_service.features.garmin.domain.garmin_models import (
+    GarminAuthenticationResultModel,
     GarminCredentialsModel,
     GarminDailyStatModel,
+    GarminMfaSubmissionModel,
     GarminTokenModel,
 )
 from health_dashboard_service.features.garmin.persistence.garmin_entities import (
@@ -42,8 +45,20 @@ class _GarminCredentialsModelFactory(DataclassFactory[GarminCredentialsModel]):
     __model__ = GarminCredentialsModel
 
 
+class _GarminAuthenticationResultModelFactory(DataclassFactory[GarminAuthenticationResultModel]):
+    __model__ = GarminAuthenticationResultModel
+
+
+class _GarminMfaSubmissionModelFactory(DataclassFactory[GarminMfaSubmissionModel]):
+    __model__ = GarminMfaSubmissionModel
+
+
 class _AuthenticateGarminRequestFactory(ModelFactory[AuthenticateGarminRequest]):
     __model__ = AuthenticateGarminRequest
+
+
+class _SubmitGarminMfaRequestFactory(ModelFactory[SubmitGarminMfaRequest]):
+    __model__ = SubmitGarminMfaRequest
 
 
 class _GarminDailyStatResponseFactory(ModelFactory[GarminDailyStatResponse]):
@@ -57,7 +72,10 @@ class GarminAutoFixture:
         GarminTokenModel: _GarminTokenModelFactory,
         GarminDailyStatModel: _GarminDailyStatModelFactory,
         GarminCredentialsModel: _GarminCredentialsModelFactory,
+        GarminAuthenticationResultModel: _GarminAuthenticationResultModelFactory,
+        GarminMfaSubmissionModel: _GarminMfaSubmissionModelFactory,
         AuthenticateGarminRequest: _AuthenticateGarminRequestFactory,
+        SubmitGarminMfaRequest: _SubmitGarminMfaRequestFactory,
         GarminDailyStatResponse: _GarminDailyStatResponseFactory,
     }
 

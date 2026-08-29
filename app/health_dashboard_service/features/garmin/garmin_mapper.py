@@ -1,7 +1,18 @@
 """Mapping between Garmin persistence rows, domain models, and contracts."""
 
-from ...contracts.garmin import AuthenticateGarminRequest, GarminDailyStatResponse
-from .domain.garmin_models import GarminCredentialsModel, GarminDailyStatModel, GarminTokenModel
+from ...contracts.garmin import (
+    AuthenticateGarminRequest,
+    GarminAuthenticateResponse,
+    GarminDailyStatResponse,
+    SubmitGarminMfaRequest,
+)
+from .domain.garmin_models import (
+    GarminAuthenticationResultModel,
+    GarminCredentialsModel,
+    GarminDailyStatModel,
+    GarminMfaSubmissionModel,
+    GarminTokenModel,
+)
 from .persistence.garmin_entities import GarminDailyStat, GarminToken
 
 
@@ -10,6 +21,20 @@ def map_from_contract_to_domain_credentials(
 ) -> GarminCredentialsModel:
     """Map from request contract AuthenticateGarminRequest to domain GarminCredentialsModel"""
     return GarminCredentialsModel(email=request.email, password=request.password)
+
+
+def map_from_domain_to_response_authentication_result(
+    result: GarminAuthenticationResultModel,
+) -> GarminAuthenticateResponse:
+    """Map from domain GarminAuthenticationResultModel to response GarminAuthenticateResponse"""
+    return GarminAuthenticateResponse(status=result.status, mfa_session_id=result.mfa_session_id)
+
+
+def map_from_contract_to_domain_mfa_submission(
+    request: SubmitGarminMfaRequest,
+) -> GarminMfaSubmissionModel:
+    """Map from request contract SubmitGarminMfaRequest to domain GarminMfaSubmissionModel"""
+    return GarminMfaSubmissionModel(mfa_session_id=request.mfa_session_id, code=request.code)
 
 
 def map_from_persistence_to_domain_token(token: GarminToken) -> GarminTokenModel:

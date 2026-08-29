@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     db_pool_recycle: int = Field(1800, description="Recycle pooled connections after N seconds")
     db_echo: bool = False
 
+    garmin_mfa_session_ttl_seconds: int = Field(
+        300, description="How long a started Garmin MFA login stays pending before expiring"
+    )
+
     @property
     def is_production(self) -> bool:
         return self.environment.lower() == "production"

@@ -5,6 +5,7 @@ from ....infrastructure.garmin import garmin_client_factory as client_factory
 from ....infrastructure.garmin.garmin_client_factory import (
     GarminClientAuthenticationError,
     GarminClientConnectionError,
+    GarminClientMfaSessionNotFoundError,
 )
 from ....infrastructure.postgres.persistence_controller_factory import (
     create_scoped_persistence_controller,
@@ -13,7 +14,13 @@ from .. import garmin_mapper as mapper
 from ..persistence import garmin_reader as reader
 from ..persistence import garmin_writer as writer
 from ..persistence.garmin_entities import GARMIN_TOKEN_SINGLETON_ID
-from .garmin_models import GarminCredentialsModel, GarminDailyStatModel, GarminTokenModel
+from .garmin_models import (
+    GarminAuthenticationResultModel,
+    GarminCredentialsModel,
+    GarminDailyStatModel,
+    GarminMfaSubmissionModel,
+    GarminTokenModel,
+)
 
 
 class GarminServiceError(Exception):
@@ -28,15 +35,45 @@ class GarminSessionNotFoundError(GarminServiceError):
     """No Garmin session has been established yet."""
 
 
-async def authenticate(credentials: GarminCredentialsModel) -> None:
-    """Exchange Garmin credentials for a session token and persist it."""
+class GarminMfaSessionNotFoundError(GarminServiceError):
+    """The Garmin MFA session is unknown or has expired."""
+
+
+async def authenticate(credentials: GarminCredentialsModel) -> GarminAuthenticationResultModel:
+    """Start a Garmin login. If Garmin challenges for an MFA code, returns an
+    mfa_required result instead of persisting a token."""
     try:
-        token_data = client_factory.login_and_dump_token(credentials.email, credentials.password)
+        result = client_factory.start_login(credentials.email, credentials.password)
     except GarminClientAuthenticationError as exc:
         raise GarminAuthenticationError(str(exc)) from exc
     except GarminClientConnectionError as exc:
         raise GarminServiceError(str(exc)) from exc
 
+    if result.mfa_required:
+        return GarminAuthenticationResultModel(
+            status="mfa_required", mfa_session_id=result.mfa_session_id
+        )
+
+    assert result.token_data is not None
+    await _persist_token(result.token_data)
+    return GarminAuthenticationResultModel(status="authenticated", mfa_session_id=None)
+
+
+async def complete_mfa(submission: GarminMfaSubmissionModel) -> None:
+    """Submit an MFA code for a pending login and persist the resulting session token."""
+    try:
+        token_data = client_factory.complete_mfa_login(submission.mfa_session_id, submission.code)
+    except GarminClientMfaSessionNotFoundError as exc:
+        raise GarminMfaSessionNotFoundError(str(exc)) from exc
+    except GarminClientAuthenticationError as exc:
+        raise GarminAuthenticationError(str(exc)) from exc
+    except GarminClientConnectionError as exc:
+        raise GarminServiceError(str(exc)) from exc
+
+    await _persist_token(token_data)
+
+
+async def _persist_token(token_data: str) -> None:
     now = datetime.now(UTC)
     token_model = GarminTokenModel(
         id=GARMIN_TOKEN_SINGLETON_ID,

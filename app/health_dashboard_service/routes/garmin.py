@@ -6,11 +6,17 @@ from fastapi import APIRouter, status
 from fastapi.exceptions import HTTPException
 
 from ..contracts.common import ProblemDetails
-from ..contracts.garmin import AuthenticateGarminRequest, GarminDailyStatResponse
+from ..contracts.garmin import (
+    AuthenticateGarminRequest,
+    GarminAuthenticateResponse,
+    GarminDailyStatResponse,
+    SubmitGarminMfaRequest,
+)
 from ..features.garmin import garmin_mapper as mapper
 from ..features.garmin.domain import garmin_service as service
 from ..features.garmin.domain.garmin_service import (
     GarminAuthenticationError,
+    GarminMfaSessionNotFoundError,
     GarminServiceError,
     GarminSessionNotFoundError,
 )
@@ -41,17 +47,25 @@ _GARMIN_UNREACHABLE: Responses = {
         "description": "Garmin Connect is unreachable, or rejected the stored session",
     }
 }
+_GARMIN_MFA_SESSION_UNKNOWN: Responses = {
+    status.HTTP_409_CONFLICT: {
+        "model": ProblemDetails,
+        "description": "The Garmin MFA session is unknown or has expired",
+    }
+}
 
 
 @router.post(
     "/garmin/authenticate",
     summary="Authenticate against Garmin Connect",
     description=(
-        "Exchanges Garmin Connect credentials for a session token, stored in Postgres. "
+        "Starts a Garmin Connect login. Returns status=authenticated and stores the resulting "
+        "session token in Postgres, or status=mfa_required with a session id to submit to "
+        "/garmin/authenticate/mfa if Garmin challenges for an MFA code. "
         "The email/password are used once for this request and are never persisted."
     ),
     tags=OAPI.GARMIN,
-    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=GarminAuthenticateResponse,
     responses={
         **OAPIResponses.BAD_REQUEST,
         **_GARMIN_UNAUTHORIZED,
@@ -59,12 +73,12 @@ _GARMIN_UNREACHABLE: Responses = {
         **OAPIResponses.SERVER_ERROR,
     },
 )
-def authenticate_garmin(body: AuthenticateGarminRequest) -> None:
+def authenticate_garmin(body: AuthenticateGarminRequest) -> GarminAuthenticateResponse:
     logger.info("authenticate_garmin called")
 
     credentials = mapper.map_from_contract_to_domain_credentials(body)
     try:
-        asyncio.run(service.authenticate(credentials))
+        result = asyncio.run(service.authenticate(credentials))
     except GarminAuthenticationError as exc:
         logger.info("authenticate_garmin rejected by Garmin")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
@@ -72,7 +86,46 @@ def authenticate_garmin(body: AuthenticateGarminRequest) -> None:
         logger.warning("authenticate_garmin failed: Garmin unreachable")
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
-    logger.info("authenticate_garmin succeeded")
+    logger.info(
+        "authenticate_garmin succeeded", extra={log_values.GARMIN_AUTH_STATUS: result.status}
+    )
+    return mapper.map_from_domain_to_response_authentication_result(result)
+
+
+@router.post(
+    "/garmin/authenticate/mfa",
+    summary="Submit a Garmin Connect MFA code",
+    description=(
+        "Completes a Garmin Connect login previously started by /garmin/authenticate that "
+        "returned status=mfa_required, persisting the resulting session token in Postgres."
+    ),
+    tags=OAPI.GARMIN,
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        **OAPIResponses.BAD_REQUEST,
+        **_GARMIN_UNAUTHORIZED,
+        **_GARMIN_MFA_SESSION_UNKNOWN,
+        **_GARMIN_UNREACHABLE,
+        **OAPIResponses.SERVER_ERROR,
+    },
+)
+def submit_garmin_mfa(body: SubmitGarminMfaRequest) -> None:
+    logger.info("submit_garmin_mfa called")
+
+    submission = mapper.map_from_contract_to_domain_mfa_submission(body)
+    try:
+        asyncio.run(service.complete_mfa(submission))
+    except GarminMfaSessionNotFoundError as exc:
+        logger.info("submit_garmin_mfa has no pending session")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except GarminAuthenticationError as exc:
+        logger.info("submit_garmin_mfa rejected by Garmin")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+    except GarminServiceError as exc:
+        logger.warning("submit_garmin_mfa failed: Garmin unreachable")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    logger.info("submit_garmin_mfa succeeded")
 
 
 @router.post(
