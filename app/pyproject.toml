@@ -2,7 +2,7 @@
 name = "template-service"
 version = "0.1.0"
 description = "Template Service API"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "fastapi[standard]>=0.115,<0.200",
     "scalar-fastapi>=1.0,<2.0",
@@ -46,7 +46,7 @@ skip_covered = true
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py314"
 src = ["."]
 
 [tool.ruff.lint]
@@ -75,7 +75,7 @@ ignore = [
 known-first-party = ["template_service", "tests"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.14"
 files = ["template_service", "tests"]
 plugins = ["pydantic.mypy"]
 warn_unused_configs = true

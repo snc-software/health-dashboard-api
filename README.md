@@ -186,7 +186,7 @@ app/
 make lock     # regenerate after changing pyproject dependencies
 ```
 
-Resolution runs inside `python:3.12-slim` — the same base image the Dockerfile
+Resolution runs inside `python:3.14-slim` — the same base image the Dockerfile
 uses — so the lock matches what production actually gets.
 
 ---
@@ -196,7 +196,7 @@ uses — so the lock matches what production actually gets.
 `.github/workflows/ci.yml` runs on every push and PR:
 
 - **quality** — ruff lint, ruff format check, mypy
-- **test** — pytest on 3.12 and 3.13 with coverage
+- **test** — pytest on 3.14 with coverage
 - **migrations** — goose up / down-to 0 / up against real Postgres
 - **docker** — builds the image and smoke-tests `/health` and `/health/ready`
 

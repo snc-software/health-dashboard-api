@@ -88,7 +88,7 @@ class PersistenceController:
         row = result.mappings().first()
         return dict(row) if row else None
 
-    async def __aenter__(self) -> "PersistenceController":
+    async def __aenter__(self) -> PersistenceController:
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
