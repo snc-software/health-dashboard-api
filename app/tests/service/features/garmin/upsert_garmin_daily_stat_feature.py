@@ -17,7 +17,7 @@ from .upsert_garmin_daily_stat_steps import (
 
 
 class TestUpsertGarminDailyStatFeature:
-    async def test_upsert_garmin_daily_stat_should_persist_and_return_daily_stats_when_session_exists(
+    async def test_upsert_garmin_daily_stat_should_persist_and_return_daily_stats(
         self,
         api_client,
         mocker,
