@@ -1,3 +1,5 @@
+from datetime import date
+
 import health_dashboard_service.features.garmin.garmin_mapper as mapper
 from health_dashboard_service.contracts.garmin import (
     AuthenticateGarminRequest,
@@ -151,3 +153,17 @@ class GarminMapperTests:
 
         assert result.mfa_session_id == request.mfa_session_id
         assert result.code == request.code
+
+    def test_can_map_from_domain_failed_dates_to_response_BatchUpsertGarminDailyStatsResponse(self):
+        failed_dates = [date(2026, 8, 20), date(2026, 8, 22)]
+
+        result = mapper.map_from_domain_to_response_batch_upsert_result(failed_dates)
+
+        assert result.failed_dates == failed_dates
+
+    def test_can_map_from_domain_no_failed_dates_to_response_BatchUpsertGarminDailyStatsResponse(
+        self,
+    ):
+        result = mapper.map_from_domain_to_response_batch_upsert_result([])
+
+        assert result.failed_dates == []

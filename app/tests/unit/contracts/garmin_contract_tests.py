@@ -1,10 +1,13 @@
 import uuid
+from datetime import date
 
 import pytest
 from pydantic import ValidationError
 
 from health_dashboard_service.contracts.garmin import (
     AuthenticateGarminRequest,
+    BatchUpsertGarminDailyStatsRequest,
+    BatchUpsertGarminDailyStatsResponse,
     GarminDailyStatResponse,
     SubmitGarminMfaRequest,
     UpsertGarminDailyStatRequest,
@@ -32,6 +35,26 @@ class GarminContractTests:
     def test_upsert_daily_stat_request_should_reject_when_stat_date_is_missing(self):
         with pytest.raises(ValidationError):
             UpsertGarminDailyStatRequest()
+
+    def test_batch_upsert_request_should_reject_when_end_date_is_before_start_date(self):
+        with pytest.raises(ValidationError):
+            BatchUpsertGarminDailyStatsRequest(
+                start_date=date(2026, 8, 20), end_date=date(2026, 8, 19)
+            )
+
+    def test_batch_upsert_request_should_accept_when_end_date_equals_start_date(self):
+        request = BatchUpsertGarminDailyStatsRequest(
+            start_date=date(2026, 8, 20), end_date=date(2026, 8, 20)
+        )
+
+        assert request.start_date == request.end_date == date(2026, 8, 20)
+
+    def test_batch_upsert_response_should_serialise_as_camel_case(self):
+        response = GarminAutoFixture.generate(BatchUpsertGarminDailyStatsResponse)
+
+        payload = response.model_dump(by_alias=True)
+
+        assert "failedDates" in payload
 
     def test_daily_stat_response_should_serialise_as_camel_case(self):
         response = GarminAutoFixture.generate(GarminDailyStatResponse)
