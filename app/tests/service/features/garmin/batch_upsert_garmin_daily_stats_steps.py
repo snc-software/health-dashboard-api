@@ -76,7 +76,6 @@ async def a_daily_stat_is_already_stored(
             HrvStatus="stale",
             TrainingReadinessScore=1,
             TrainingStatus="stale",
-            Spo2Average=1,
             Vo2Max=1.0,
             FitnessAge=1.0,
             WeightGrams=1,
@@ -102,7 +101,6 @@ async def assert_daily_stat_persisted(
     assert row.HrvStatus == snapshot.hrv_status
     assert row.TrainingReadinessScore == snapshot.training_readiness_score
     assert row.TrainingStatus == snapshot.training_status
-    assert row.Spo2Average == snapshot.spo2_average
     assert row.Vo2Max == snapshot.vo2_max
     assert row.FitnessAge == snapshot.fitness_age
     assert row.WeightGrams == snapshot.weight_grams
