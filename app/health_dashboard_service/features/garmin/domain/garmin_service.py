@@ -113,7 +113,6 @@ async def upsert_daily_stat(stat_date: date) -> GarminDailyStatModel:
             hrv_status=snapshot.hrv_status,
             training_readiness_score=snapshot.training_readiness_score,
             training_status=snapshot.training_status,
-            spo2_average=snapshot.spo2_average,
             vo2_max=snapshot.vo2_max,
             fitness_age=snapshot.fitness_age,
             weight_grams=snapshot.weight_grams,

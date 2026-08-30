@@ -56,7 +56,6 @@ class GarminDailyStatResponse(ApiModel):
     hrv_status: str | None
     training_readiness_score: int | None
     training_status: str | None
-    spo2_average: int | None
     vo2_max: float | None
     fitness_age: float | None
     weight_grams: int | None

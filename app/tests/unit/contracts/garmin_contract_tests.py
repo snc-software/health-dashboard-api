@@ -70,7 +70,6 @@ class GarminContractTests:
         assert "hrvStatus" in payload
         assert "trainingReadinessScore" in payload
         assert "trainingStatus" in payload
-        assert "spo2Average" in payload
         assert "vo2Max" in payload
         assert "fitnessAge" in payload
         assert "weightGrams" in payload
