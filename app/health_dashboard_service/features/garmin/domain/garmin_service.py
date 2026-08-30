@@ -107,7 +107,17 @@ async def upsert_daily_stat(stat_date: date) -> GarminDailyStatModel:
             steps=snapshot.steps,
             resting_heart_rate=snapshot.resting_heart_rate,
             sleep_seconds=snapshot.sleep_seconds,
-            body_battery=snapshot.body_battery,
+            peak_body_battery=snapshot.peak_body_battery,
+            sleep_score=snapshot.sleep_score,
+            hrv_last_night_average=snapshot.hrv_last_night_average,
+            hrv_status=snapshot.hrv_status,
+            training_readiness_score=snapshot.training_readiness_score,
+            training_status=snapshot.training_status,
+            spo2_average=snapshot.spo2_average,
+            vo2_max=snapshot.vo2_max,
+            fitness_age=snapshot.fitness_age,
+            weight_grams=snapshot.weight_grams,
+            intensity_minutes=snapshot.intensity_minutes,
             updated_timestamp=datetime.now(UTC),
         )
         saved = await writer.upsert_daily_stat(
