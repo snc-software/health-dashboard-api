@@ -61,7 +61,17 @@ async def assert_daily_stat_persisted(
     assert row.Steps == snapshot.steps
     assert row.RestingHeartRate == snapshot.resting_heart_rate
     assert row.SleepSeconds == snapshot.sleep_seconds
-    assert row.BodyBattery == snapshot.body_battery
+    assert row.PeakBodyBattery == snapshot.peak_body_battery
+    assert row.SleepScore == snapshot.sleep_score
+    assert row.HrvLastNightAverage == snapshot.hrv_last_night_average
+    assert row.HrvStatus == snapshot.hrv_status
+    assert row.TrainingReadinessScore == snapshot.training_readiness_score
+    assert row.TrainingStatus == snapshot.training_status
+    assert row.Spo2Average == snapshot.spo2_average
+    assert row.Vo2Max == snapshot.vo2_max
+    assert row.FitnessAge == snapshot.fitness_age
+    assert row.WeightGrams == snapshot.weight_grams
+    assert row.IntensityMinutes == snapshot.intensity_minutes
 
 
 def assert_response_status(response: httpx.Response, status_code: int) -> None:

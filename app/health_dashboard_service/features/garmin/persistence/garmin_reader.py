@@ -21,8 +21,10 @@ async def get_daily_stat_by_date(
 ) -> GarminDailyStat | None:
     row = await pc.query_single_or_default(
         """
-        SELECT "Id", "StatDate", "Steps", "RestingHeartRate", "SleepSeconds", "BodyBattery",
-               "UpdatedTimestamp"
+        SELECT "Id", "StatDate", "Steps", "RestingHeartRate", "SleepSeconds", "PeakBodyBattery",
+               "SleepScore", "HrvLastNightAverage", "HrvStatus", "TrainingReadinessScore",
+               "TrainingStatus", "Spo2Average", "Vo2Max", "FitnessAge", "WeightGrams",
+               "IntensityMinutes", "UpdatedTimestamp"
         FROM public."GarminDailyStats"
         WHERE "StatDate" = :stat_date
         """,

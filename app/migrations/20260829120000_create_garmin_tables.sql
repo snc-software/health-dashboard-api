@@ -12,7 +12,17 @@ CREATE TABLE IF NOT EXISTS public."GarminDailyStats" (
     "Steps" INTEGER,
     "RestingHeartRate" INTEGER,
     "SleepSeconds" INTEGER,
-    "BodyBattery" INTEGER,
+    "PeakBodyBattery" INTEGER,
+    "SleepScore" INTEGER,
+    "HrvLastNightAverage" INTEGER,
+    "HrvStatus" TEXT,
+    "TrainingReadinessScore" INTEGER,
+    "TrainingStatus" TEXT,
+    "Spo2Average" INTEGER,
+    "Vo2Max" REAL,
+    "FitnessAge" REAL,
+    "WeightGrams" INTEGER,
+    "IntensityMinutes" INTEGER,
     "UpdatedTimestamp" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

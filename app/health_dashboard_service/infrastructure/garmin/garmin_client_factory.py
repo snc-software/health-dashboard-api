@@ -45,7 +45,17 @@ class GarminDailySnapshot:
     steps: int | None
     resting_heart_rate: int | None
     sleep_seconds: int | None
-    body_battery: int | None
+    peak_body_battery: int | None
+    sleep_score: int | None
+    hrv_last_night_average: int | None
+    hrv_status: str | None
+    training_readiness_score: int | None
+    training_status: str | None
+    spo2_average: int | None
+    vo2_max: float | None
+    fitness_age: float | None
+    weight_grams: int | None
+    intensity_minutes: int | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,14 +138,36 @@ def fetch_daily_snapshot(token_data: str, stat_date: date) -> GarminDailySnapsho
         stats = client.get_stats(cdate)
         sleep = client.get_sleep_data(cdate)
         battery = client.get_body_battery(cdate)
+        hrv = client.get_hrv_data(cdate)
+        readiness = client.get_training_readiness(cdate)
+        status = client.get_training_status(cdate)
+        spo2 = client.get_spo2_data(cdate)
+        # SDK type hint claims dict[str, Any]; observed live response is actually a list
+        # (one entry per day in the range, see _extract_max_metrics).
+        max_metrics = cast(list[dict], client.get_max_metrics(cdate))
+        weigh_ins = client.get_daily_weigh_ins(cdate)
+        intensity = client.get_intensity_minutes_data(cdate)
     except (GarminConnectConnectionError, GarminConnectTooManyRequestsError) as exc:
         raise GarminClientConnectionError(str(exc)) from exc
+
+    vo2_max, fitness_age = _extract_max_metrics(max_metrics)
+    hrv_last_night_average, hrv_status = _extract_hrv(hrv)
 
     return GarminDailySnapshot(
         steps=stats.get("totalSteps"),
         resting_heart_rate=stats.get("restingHeartRate"),
         sleep_seconds=_extract_sleep_seconds(sleep),
-        body_battery=_extract_body_battery(battery),
+        peak_body_battery=_extract_peak_body_battery(battery),
+        sleep_score=_extract_sleep_score(sleep),
+        hrv_last_night_average=hrv_last_night_average,
+        hrv_status=hrv_status,
+        training_readiness_score=_extract_training_readiness_peak(readiness),
+        training_status=_extract_training_status(status),
+        spo2_average=_extract_spo2_average(spo2),
+        vo2_max=vo2_max,
+        fitness_age=fitness_age,
+        weight_grams=_extract_latest_weight(weigh_ins),
+        intensity_minutes=_extract_intensity_minutes(intensity),
     )
 
 
@@ -153,11 +185,101 @@ def _extract_sleep_seconds(sleep: dict | None) -> int | None:
     return daily_sleep.get("sleepTimeSeconds") if daily_sleep else None
 
 
-def _extract_body_battery(battery: list[dict] | None) -> int | None:
+def _extract_sleep_score(sleep: dict | None) -> int | None:
+    daily_sleep = sleep.get("dailySleepDTO") if sleep else None
+    scores = daily_sleep.get("sleepScores") if daily_sleep else None
+    overall = scores.get("overall") if scores else None
+    # Assumed shape (NEEDS CONFIRMING against a live response, see plans/ISSUE-5-*): the overall
+    # sleep score sits at dailySleepDTO.sleepScores.overall.value, alongside per-stage sub-scores.
+    return overall.get("value") if overall else None
+
+
+def _extract_peak_body_battery(battery: list[dict] | None) -> int | None:
     if not battery:
         return None
     values = battery[0].get("bodyBatteryValuesArray") or []
     if not values:
         return None
-    # Each entry is [timestamp, value, status, version]; take the most recent value.
-    return values[-1][1]
+    # Each entry is [timestamp, value, status, version]; value is null for gaps in the
+    # timeline (e.g. when the device wasn't worn), so those must be filtered before
+    # taking the peak value across the day.
+    levels = [entry[1] for entry in values if entry[1] is not None]
+    return max(levels) if levels else None
+
+
+def _extract_hrv(hrv: dict | None) -> tuple[int | None, str | None]:
+    # Assumed shape (NEEDS CONFIRMING, see plans/ISSUE-5-*): hrvSummary.lastNightAvg (ms) and
+    # hrvSummary.status (e.g. "BALANCED"). get_hrv_data itself may return None outright.
+    summary = hrv.get("hrvSummary") if hrv else None
+    if not summary:
+        return None, None
+    return summary.get("lastNightAvg"), summary.get("status")
+
+
+def _extract_training_readiness_peak(readiness: list[dict] | None) -> int | None:
+    if not readiness:
+        return None
+    scores = [score for entry in readiness if (score := entry.get("score")) is not None]
+    return max(scores) if scores else None
+
+
+# Confirmed against a live response: trainingStatus is an integer enum code (Garmin's own
+# app renders these via a fixed lookup), not a string label directly.
+_TRAINING_STATUS_LABELS: dict[int, str] = {
+    0: "NO_STATUS",
+    1: "DETRAINING",
+    2: "RECOVERY",
+    3: "MAINTAINING",
+    4: "PRODUCTIVE",
+    5: "PEAKING",
+    6: "OVERREACHING",
+    7: "STRAINED",
+    8: "UNPRODUCTIVE",
+}
+
+
+def _extract_training_status(status: dict | None) -> str | None:
+    # Confirmed shape: mostRecentTrainingStatus.latestTrainingStatusData is a dict keyed by
+    # device id, each entry carrying a numeric trainingStatus code (see _TRAINING_STATUS_LABELS).
+    most_recent = status.get("mostRecentTrainingStatus") if status else None
+    latest_by_device = most_recent.get("latestTrainingStatusData") if most_recent else None
+    if not latest_by_device:
+        return None
+    device_entry = next(iter(latest_by_device.values()), None)
+    code = device_entry.get("trainingStatus") if device_entry else None
+    if code is None:
+        return None
+    return _TRAINING_STATUS_LABELS.get(code, str(code))
+
+
+def _extract_spo2_average(spo2: dict | None) -> int | None:
+    # Assumed field name (NEEDS CONFIRMING, see plans/ISSUE-5-*).
+    return spo2.get("averageSpO2") if spo2 else None
+
+
+def _extract_max_metrics(metrics: list[dict] | None) -> tuple[float | None, float | None]:
+    # Confirmed against a live response: get_max_metrics returns a list (one entry per day
+    # in the requested range), not the dict its own type hint claims. VO2max and fitness age
+    # sit under a "generic" (non-cycling) sub-object on that day's entry.
+    if not metrics:
+        return None, None
+    generic = metrics[0].get("generic")
+    if not generic:
+        return None, None
+    return generic.get("vo2MaxValue"), generic.get("fitnessAge")
+
+
+def _extract_latest_weight(weigh_ins: dict | None) -> int | None:
+    entries = weigh_ins.get("dateWeightList") if weigh_ins else None
+    if not entries:
+        return None
+    # Expected to contain a single entry per day; take the latest by timestamp defensively in
+    # case more than one is ever returned. Weight is already in grams.
+    latest = max(entries, key=lambda entry: entry.get("timestampGMT") or entry.get("date") or 0)
+    return latest.get("weight")
+
+
+def _extract_intensity_minutes(intensity: dict | None) -> int | None:
+    # Assumed field name (NEEDS CONFIRMING, see plans/ISSUE-5-*): a single rolled-up total for
+    # the day (Garmin's own moderate + 2x vigorous weighting already applied).
+    return intensity.get("totalIntensityMinutes") if intensity else None

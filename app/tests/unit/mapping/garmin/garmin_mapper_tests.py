@@ -54,7 +54,17 @@ class GarminMapperTests:
         assert result.steps == stat.Steps
         assert result.resting_heart_rate == stat.RestingHeartRate
         assert result.sleep_seconds == stat.SleepSeconds
-        assert result.body_battery == stat.BodyBattery
+        assert result.peak_body_battery == stat.PeakBodyBattery
+        assert result.sleep_score == stat.SleepScore
+        assert result.hrv_last_night_average == stat.HrvLastNightAverage
+        assert result.hrv_status == stat.HrvStatus
+        assert result.training_readiness_score == stat.TrainingReadinessScore
+        assert result.training_status == stat.TrainingStatus
+        assert result.spo2_average == stat.Spo2Average
+        assert result.vo2_max == stat.Vo2Max
+        assert result.fitness_age == stat.FitnessAge
+        assert result.weight_grams == stat.WeightGrams
+        assert result.intensity_minutes == stat.IntensityMinutes
         assert result.updated_timestamp == stat.UpdatedTimestamp
 
     def test_can_map_from_domain_GarminDailyStatModel_to_persistence_GarminDailyStat(self):
@@ -67,7 +77,17 @@ class GarminMapperTests:
         assert result.Steps == stat_model.steps
         assert result.RestingHeartRate == stat_model.resting_heart_rate
         assert result.SleepSeconds == stat_model.sleep_seconds
-        assert result.BodyBattery == stat_model.body_battery
+        assert result.PeakBodyBattery == stat_model.peak_body_battery
+        assert result.SleepScore == stat_model.sleep_score
+        assert result.HrvLastNightAverage == stat_model.hrv_last_night_average
+        assert result.HrvStatus == stat_model.hrv_status
+        assert result.TrainingReadinessScore == stat_model.training_readiness_score
+        assert result.TrainingStatus == stat_model.training_status
+        assert result.Spo2Average == stat_model.spo2_average
+        assert result.Vo2Max == stat_model.vo2_max
+        assert result.FitnessAge == stat_model.fitness_age
+        assert result.WeightGrams == stat_model.weight_grams
+        assert result.IntensityMinutes == stat_model.intensity_minutes
         assert result.UpdatedTimestamp == stat_model.updated_timestamp
 
     def test_can_map_from_domain_GarminDailyStatModel_to_response_GarminDailyStatResponse(self):
@@ -79,7 +99,17 @@ class GarminMapperTests:
         assert result.steps == stat_model.steps
         assert result.resting_heart_rate == stat_model.resting_heart_rate
         assert result.sleep_seconds == stat_model.sleep_seconds
-        assert result.body_battery == stat_model.body_battery
+        assert result.peak_body_battery == stat_model.peak_body_battery
+        assert result.sleep_score == stat_model.sleep_score
+        assert result.hrv_last_night_average == stat_model.hrv_last_night_average
+        assert result.hrv_status == stat_model.hrv_status
+        assert result.training_readiness_score == stat_model.training_readiness_score
+        assert result.training_status == stat_model.training_status
+        assert result.spo2_average == stat_model.spo2_average
+        assert result.vo2_max == stat_model.vo2_max
+        assert result.fitness_age == stat_model.fitness_age
+        assert result.weight_grams == stat_model.weight_grams
+        assert result.intensity_minutes == stat_model.intensity_minutes
         assert result.updated_timestamp == stat_model.updated_timestamp
 
     def test_domain_to_response_daily_stat_should_serialise_as_camel_case(self):
@@ -91,7 +121,17 @@ class GarminMapperTests:
         assert "statDate" in payload
         assert "restingHeartRate" in payload
         assert "sleepSeconds" in payload
-        assert "bodyBattery" in payload
+        assert "peakBodyBattery" in payload
+        assert "sleepScore" in payload
+        assert "hrvLastNightAverage" in payload
+        assert "hrvStatus" in payload
+        assert "trainingReadinessScore" in payload
+        assert "trainingStatus" in payload
+        assert "spo2Average" in payload
+        assert "vo2Max" in payload
+        assert "fitnessAge" in payload
+        assert "weightGrams" in payload
+        assert "intensityMinutes" in payload
         assert "updatedTimestamp" in payload
 
     def test_can_map_from_domain_GarminAuthenticationResultModel_to_response_GarminAuthenticateResponse(  # noqa: E501
