@@ -23,7 +23,7 @@ async def get_daily_stat_by_date(
         """
         SELECT "Id", "StatDate", "Steps", "RestingHeartRate", "SleepSeconds", "PeakBodyBattery",
                "SleepScore", "HrvLastNightAverage", "HrvStatus", "TrainingReadinessScore",
-               "TrainingStatus", "Spo2Average", "Vo2Max", "FitnessAge", "WeightGrams",
+               "TrainingStatus", "Vo2Max", "FitnessAge", "WeightGrams",
                "IntensityMinutes", "UpdatedTimestamp"
         FROM public."GarminDailyStats"
         WHERE "StatDate" = :stat_date

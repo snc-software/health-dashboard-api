@@ -1,8 +1,8 @@
 from datetime import date, datetime
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, model_validator
 
 from .base import ApiModel
 
@@ -28,6 +28,23 @@ class UpsertGarminDailyStatRequest(ApiModel):
     stat_date: date = Field(..., description="The date to pull and store Garmin summary stats for.")
 
 
+class BatchUpsertGarminDailyStatsRequest(ApiModel):
+    start_date: date = Field(..., description="First date (inclusive) to pull and store stats for.")
+    end_date: date = Field(..., description="Last date (inclusive) to pull and store stats for.")
+
+    @model_validator(mode="after")
+    def check_end_date_not_before_start_date(self) -> Self:
+        if self.end_date < self.start_date:
+            raise ValueError("end_date must not be before start_date")
+        return self
+
+
+class BatchUpsertGarminDailyStatsResponse(ApiModel):
+    failed_dates: list[date] = Field(
+        ..., description="Dates in the range that failed to upsert; empty if all succeeded."
+    )
+
+
 class GarminDailyStatResponse(ApiModel):
     stat_date: date
     steps: int | None
@@ -39,7 +56,6 @@ class GarminDailyStatResponse(ApiModel):
     hrv_status: str | None
     training_readiness_score: int | None
     training_status: str | None
-    spo2_average: int | None
     vo2_max: float | None
     fitness_age: float | None
     weight_grams: int | None

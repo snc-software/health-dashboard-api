@@ -4,6 +4,7 @@ import httpx
 
 from health_dashboard_service.contracts.garmin import (
     AuthenticateGarminRequest,
+    BatchUpsertGarminDailyStatsRequest,
     SubmitGarminMfaRequest,
     UpsertGarminDailyStatRequest,
 )
@@ -33,4 +34,12 @@ async def upsert_garmin_daily_stat(
 ) -> httpx.Response:
     payload = request.model_dump(by_alias=True, mode="json")
     req = BaseApiClient.get_base_request(client, "POST", "/garmin-daily-stats", json=payload)
+    return await client.send(req)
+
+
+async def batch_upsert_garmin_daily_stats(
+    client: httpx.AsyncClient, request: BatchUpsertGarminDailyStatsRequest
+) -> httpx.Response:
+    payload = request.model_dump(by_alias=True, mode="json")
+    req = BaseApiClient.get_base_request(client, "POST", "/batch-garmin-daily-stats", json=payload)
     return await client.send(req)

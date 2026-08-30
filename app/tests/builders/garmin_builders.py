@@ -2,9 +2,12 @@ from typing import Any, ClassVar, TypeVar
 
 from polyfactory.factories import DataclassFactory
 from polyfactory.factories.pydantic_factory import ModelFactory
+from polyfactory.fields import PostGenerated
 
 from health_dashboard_service.contracts.garmin import (
     AuthenticateGarminRequest,
+    BatchUpsertGarminDailyStatsRequest,
+    BatchUpsertGarminDailyStatsResponse,
     GarminDailyStatResponse,
     SubmitGarminMfaRequest,
     UpsertGarminDailyStatRequest,
@@ -70,6 +73,20 @@ class _UpsertGarminDailyStatRequestFactory(ModelFactory[UpsertGarminDailyStatReq
     __model__ = UpsertGarminDailyStatRequest
 
 
+class _BatchUpsertGarminDailyStatsRequestFactory(ModelFactory[BatchUpsertGarminDailyStatsRequest]):
+    __model__ = BatchUpsertGarminDailyStatsRequest
+
+    # end_date must not be before start_date; default to a same-day range so
+    # random generation always satisfies the contract's model_validator.
+    end_date = PostGenerated(lambda name, values: values["start_date"])
+
+
+class _BatchUpsertGarminDailyStatsResponseFactory(
+    ModelFactory[BatchUpsertGarminDailyStatsResponse]
+):
+    __model__ = BatchUpsertGarminDailyStatsResponse
+
+
 class GarminAutoFixture:
     _factories: ClassVar[dict[type, Any]] = {
         GarminToken: _GarminTokenFactory,
@@ -83,6 +100,8 @@ class GarminAutoFixture:
         SubmitGarminMfaRequest: _SubmitGarminMfaRequestFactory,
         GarminDailyStatResponse: _GarminDailyStatResponseFactory,
         UpsertGarminDailyStatRequest: _UpsertGarminDailyStatRequestFactory,
+        BatchUpsertGarminDailyStatsRequest: _BatchUpsertGarminDailyStatsRequestFactory,
+        BatchUpsertGarminDailyStatsResponse: _BatchUpsertGarminDailyStatsResponseFactory,
     }
 
     @staticmethod

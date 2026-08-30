@@ -7,6 +7,8 @@ from fastapi.exceptions import HTTPException
 from ..contracts.common import ProblemDetails
 from ..contracts.garmin import (
     AuthenticateGarminRequest,
+    BatchUpsertGarminDailyStatsRequest,
+    BatchUpsertGarminDailyStatsResponse,
     GarminAuthenticateResponse,
     GarminDailyStatResponse,
     SubmitGarminMfaRequest,
@@ -158,3 +160,51 @@ def upsert_garmin_daily_stat(body: UpsertGarminDailyStatRequest) -> GarminDailyS
 
     logger.info("upsert_garmin_daily_stat succeeded", extra={log_values.STAT_DATE: body.stat_date})
     return mapper.map_from_domain_to_response_daily_stat(stat)
+
+
+@router.post(
+    "/batch-garmin-daily-stats",
+    summary="Backfill Garmin daily stats over a date range",
+    description=(
+        "Uses the stored Garmin session to pull and upsert summary stats for every date in the "
+        "inclusive start_date/end_date range, sequentially. A failure on one date does not abort "
+        "the rest of the range."
+    ),
+    tags=OAPI.GARMIN,
+    response_model=BatchUpsertGarminDailyStatsResponse,
+    responses={
+        **OAPIResponses.BAD_REQUEST,
+        **_GARMIN_NO_SESSION,
+        **OAPIResponses.SERVER_ERROR,
+    },
+)
+def batch_upsert_garmin_daily_stats(
+    body: BatchUpsertGarminDailyStatsRequest,
+) -> BatchUpsertGarminDailyStatsResponse:
+    logger.info(
+        "batch_upsert_garmin_daily_stats called",
+        extra={log_values.START_DATE: body.start_date, log_values.END_DATE: body.end_date},
+    )
+
+    try:
+        failed_dates = asyncio.run(service.upsert_daily_stats_range(body.start_date, body.end_date))
+    except GarminSessionNotFoundError as exc:
+        logger.info("batch_upsert_garmin_daily_stats has no stored session")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+    if failed_dates:
+        logger.warning(
+            "batch_upsert_garmin_daily_stats completed with failures",
+            extra={
+                log_values.START_DATE: body.start_date,
+                log_values.END_DATE: body.end_date,
+                "failed_dates": [str(d) for d in failed_dates],
+            },
+        )
+    else:
+        logger.info(
+            "batch_upsert_garmin_daily_stats succeeded",
+            extra={log_values.START_DATE: body.start_date, log_values.END_DATE: body.end_date},
+        )
+
+    return mapper.map_from_domain_to_response_batch_upsert_result(failed_dates)

@@ -28,7 +28,6 @@ class GarminDailyStat:
     HrvStatus: str | None
     TrainingReadinessScore: int | None
     TrainingStatus: str | None
-    Spo2Average: int | None
     Vo2Max: float | None
     FitnessAge: float | None
     WeightGrams: int | None

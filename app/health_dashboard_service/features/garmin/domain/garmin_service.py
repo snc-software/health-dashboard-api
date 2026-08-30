@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from uuid import uuid7
 
 from ....infrastructure.garmin import garmin_client_factory as client_factory
@@ -113,7 +113,6 @@ async def upsert_daily_stat(stat_date: date) -> GarminDailyStatModel:
             hrv_status=snapshot.hrv_status,
             training_readiness_score=snapshot.training_readiness_score,
             training_status=snapshot.training_status,
-            spo2_average=snapshot.spo2_average,
             vo2_max=snapshot.vo2_max,
             fitness_age=snapshot.fitness_age,
             weight_grams=snapshot.weight_grams,
@@ -125,3 +124,24 @@ async def upsert_daily_stat(stat_date: date) -> GarminDailyStatModel:
         )
         await pc.save_changes()
         return mapper.map_from_persistence_to_domain_daily_stat(saved)
+
+
+async def upsert_daily_stats_range(start_date: date, end_date: date) -> list[date]:
+    """Pull and upsert Garmin summary stats for every date in the inclusive range,
+    sequentially, reusing upsert_daily_stat per day.
+
+    A missing Garmin session raises immediately, since no date in the range could
+    succeed. Any other per-day Garmin failure is caught so the rest of the range
+    still gets attempted; the dates that failed are returned to the caller.
+    """
+    failed_dates: list[date] = []
+    current_date = start_date
+    while current_date <= end_date:
+        try:
+            await upsert_daily_stat(current_date)
+        except GarminSessionNotFoundError:
+            raise
+        except GarminServiceError:
+            failed_dates.append(current_date)
+        current_date += timedelta(days=1)
+    return failed_dates

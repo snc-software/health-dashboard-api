@@ -1,7 +1,10 @@
 """Mapping between Garmin persistence rows, domain models, and contracts."""
 
+from datetime import date
+
 from ...contracts.garmin import (
     AuthenticateGarminRequest,
+    BatchUpsertGarminDailyStatsResponse,
     GarminAuthenticateResponse,
     GarminDailyStatResponse,
     SubmitGarminMfaRequest,
@@ -71,7 +74,6 @@ def map_from_persistence_to_domain_daily_stat(stat: GarminDailyStat) -> GarminDa
         hrv_status=stat.HrvStatus,
         training_readiness_score=stat.TrainingReadinessScore,
         training_status=stat.TrainingStatus,
-        spo2_average=stat.Spo2Average,
         vo2_max=stat.Vo2Max,
         fitness_age=stat.FitnessAge,
         weight_grams=stat.WeightGrams,
@@ -94,7 +96,6 @@ def map_from_domain_to_persistence_daily_stat(stat_model: GarminDailyStatModel) 
         HrvStatus=stat_model.hrv_status,
         TrainingReadinessScore=stat_model.training_readiness_score,
         TrainingStatus=stat_model.training_status,
-        Spo2Average=stat_model.spo2_average,
         Vo2Max=stat_model.vo2_max,
         FitnessAge=stat_model.fitness_age,
         WeightGrams=stat_model.weight_grams,
@@ -118,10 +119,16 @@ def map_from_domain_to_response_daily_stat(
         hrv_status=stat_model.hrv_status,
         training_readiness_score=stat_model.training_readiness_score,
         training_status=stat_model.training_status,
-        spo2_average=stat_model.spo2_average,
         vo2_max=stat_model.vo2_max,
         fitness_age=stat_model.fitness_age,
         weight_grams=stat_model.weight_grams,
         intensity_minutes=stat_model.intensity_minutes,
         updated_timestamp=stat_model.updated_timestamp,
     )
+
+
+def map_from_domain_to_response_batch_upsert_result(
+    failed_dates: list[date],
+) -> BatchUpsertGarminDailyStatsResponse:
+    """Map from the domain's list of failed dates to response BatchUpsertGarminDailyStatsResponse"""
+    return BatchUpsertGarminDailyStatsResponse(failed_dates=failed_dates)

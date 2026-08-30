@@ -51,7 +51,6 @@ class GarminDailySnapshot:
     hrv_status: str | None
     training_readiness_score: int | None
     training_status: str | None
-    spo2_average: int | None
     vo2_max: float | None
     fitness_age: float | None
     weight_grams: int | None
@@ -141,7 +140,6 @@ def fetch_daily_snapshot(token_data: str, stat_date: date) -> GarminDailySnapsho
         hrv = client.get_hrv_data(cdate)
         readiness = client.get_training_readiness(cdate)
         status = client.get_training_status(cdate)
-        spo2 = client.get_spo2_data(cdate)
         # SDK type hint claims dict[str, Any]; observed live response is actually a list
         # (one entry per day in the range, see _extract_max_metrics).
         max_metrics = cast(list[dict], client.get_max_metrics(cdate))
@@ -163,7 +161,6 @@ def fetch_daily_snapshot(token_data: str, stat_date: date) -> GarminDailySnapsho
         hrv_status=hrv_status,
         training_readiness_score=_extract_training_readiness_peak(readiness),
         training_status=_extract_training_status(status),
-        spo2_average=_extract_spo2_average(spo2),
         vo2_max=vo2_max,
         fitness_age=fitness_age,
         weight_grams=_extract_latest_weight(weigh_ins),
@@ -252,11 +249,6 @@ def _extract_training_status(status: dict | None) -> str | None:
     return _TRAINING_STATUS_LABELS.get(code, str(code))
 
 
-def _extract_spo2_average(spo2: dict | None) -> int | None:
-    # Assumed field name (NEEDS CONFIRMING, see plans/ISSUE-5-*).
-    return spo2.get("averageSpO2") if spo2 else None
-
-
 def _extract_max_metrics(metrics: list[dict] | None) -> tuple[float | None, float | None]:
     # Confirmed against a live response: get_max_metrics returns a list (one entry per day
     # in the requested range), not the dict its own type hint claims. VO2max and fitness age
@@ -280,6 +272,18 @@ def _extract_latest_weight(weigh_ins: dict | None) -> int | None:
 
 
 def _extract_intensity_minutes(intensity: dict | None) -> int | None:
-    # Assumed field name (NEEDS CONFIRMING, see plans/ISSUE-5-*): a single rolled-up total for
-    # the day (Garmin's own moderate + 2x vigorous weighting already applied).
-    return intensity.get("totalIntensityMinutes") if intensity else None
+    # The daily intensity-minutes endpoint has no single rolled-up "total" field (confirmed by
+    # inspecting garminconnect's own unit tests and independent open-source Garmin clients that
+    # parse this response — no project reads a "totalIntensityMinutes" key, which is what the
+    # original, never-confirmed implementation here assumed and which is why this was always
+    # null). It reports separate moderate/vigorous values, mirroring get_weekly_intensity_minutes's
+    # documented moderateValue/vigorousValue shape; Garmin's own total weights vigorous minutes
+    # 2x. STILL NEEDS CONFIRMING against a live response (see plans/ISSUE-5-*) — no test/sandbox
+    # account was available to verify the exact key names.
+    if not intensity:
+        return None
+    moderate = intensity.get("moderateValue")
+    vigorous = intensity.get("vigorousValue")
+    if moderate is None and vigorous is None:
+        return None
+    return (moderate or 0) + 2 * (vigorous or 0)

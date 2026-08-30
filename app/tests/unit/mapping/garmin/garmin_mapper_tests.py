@@ -1,3 +1,5 @@
+from datetime import date
+
 import health_dashboard_service.features.garmin.garmin_mapper as mapper
 from health_dashboard_service.contracts.garmin import (
     AuthenticateGarminRequest,
@@ -60,7 +62,6 @@ class GarminMapperTests:
         assert result.hrv_status == stat.HrvStatus
         assert result.training_readiness_score == stat.TrainingReadinessScore
         assert result.training_status == stat.TrainingStatus
-        assert result.spo2_average == stat.Spo2Average
         assert result.vo2_max == stat.Vo2Max
         assert result.fitness_age == stat.FitnessAge
         assert result.weight_grams == stat.WeightGrams
@@ -83,7 +84,6 @@ class GarminMapperTests:
         assert result.HrvStatus == stat_model.hrv_status
         assert result.TrainingReadinessScore == stat_model.training_readiness_score
         assert result.TrainingStatus == stat_model.training_status
-        assert result.Spo2Average == stat_model.spo2_average
         assert result.Vo2Max == stat_model.vo2_max
         assert result.FitnessAge == stat_model.fitness_age
         assert result.WeightGrams == stat_model.weight_grams
@@ -105,7 +105,6 @@ class GarminMapperTests:
         assert result.hrv_status == stat_model.hrv_status
         assert result.training_readiness_score == stat_model.training_readiness_score
         assert result.training_status == stat_model.training_status
-        assert result.spo2_average == stat_model.spo2_average
         assert result.vo2_max == stat_model.vo2_max
         assert result.fitness_age == stat_model.fitness_age
         assert result.weight_grams == stat_model.weight_grams
@@ -127,7 +126,6 @@ class GarminMapperTests:
         assert "hrvStatus" in payload
         assert "trainingReadinessScore" in payload
         assert "trainingStatus" in payload
-        assert "spo2Average" in payload
         assert "vo2Max" in payload
         assert "fitnessAge" in payload
         assert "weightGrams" in payload
@@ -151,3 +149,17 @@ class GarminMapperTests:
 
         assert result.mfa_session_id == request.mfa_session_id
         assert result.code == request.code
+
+    def test_can_map_from_domain_failed_dates_to_response_BatchUpsertGarminDailyStatsResponse(self):
+        failed_dates = [date(2026, 8, 20), date(2026, 8, 22)]
+
+        result = mapper.map_from_domain_to_response_batch_upsert_result(failed_dates)
+
+        assert result.failed_dates == failed_dates
+
+    def test_can_map_from_domain_no_failed_dates_to_response_BatchUpsertGarminDailyStatsResponse(
+        self,
+    ):
+        result = mapper.map_from_domain_to_response_batch_upsert_result([])
+
+        assert result.failed_dates == []

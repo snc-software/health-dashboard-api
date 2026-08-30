@@ -6,6 +6,7 @@ service calls it through, at `infrastructure/garmin/garmin_client_factory.py`.
 """
 
 import uuid
+from datetime import date
 from typing import Any
 
 from pytest_mock import MockerFixture
@@ -89,3 +90,25 @@ def configure_daily_snapshot_unreachable(mocker: MockerFixture) -> Any:
         "fetch_daily_snapshot",
         side_effect=GarminClientConnectionError("Garmin Connect is unreachable."),
     )
+
+
+def configure_daily_snapshots(
+    mocker: MockerFixture, snapshots_by_date: dict[date, GarminDailySnapshot]
+) -> Any:
+    def fetch(token_data: str, stat_date: date) -> GarminDailySnapshot:
+        return snapshots_by_date[stat_date]
+
+    return mocker.patch.object(garmin_client_factory, "fetch_daily_snapshot", side_effect=fetch)
+
+
+def configure_daily_snapshots_with_failure(
+    mocker: MockerFixture,
+    snapshots_by_date: dict[date, GarminDailySnapshot],
+    failing_dates: set[date],
+) -> Any:
+    def fetch(token_data: str, stat_date: date) -> GarminDailySnapshot:
+        if stat_date in failing_dates:
+            raise GarminClientConnectionError("Garmin Connect is unreachable.")
+        return snapshots_by_date[stat_date]
+
+    return mocker.patch.object(garmin_client_factory, "fetch_daily_snapshot", side_effect=fetch)

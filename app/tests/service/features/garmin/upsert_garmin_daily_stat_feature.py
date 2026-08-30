@@ -36,7 +36,6 @@ class TestUpsertGarminDailyStatFeature:
             hrv_status="BALANCED",
             training_readiness_score=72,
             training_status="PRODUCTIVE",
-            spo2_average=97,
             vo2_max=45,
             fitness_age=32.5,
             weight_grams=70500,
@@ -59,7 +58,6 @@ class TestUpsertGarminDailyStatFeature:
         assert body["hrvStatus"] == snapshot.hrv_status
         assert body["trainingReadinessScore"] == snapshot.training_readiness_score
         assert body["trainingStatus"] == snapshot.training_status
-        assert body["spo2Average"] == snapshot.spo2_average
         assert body["vo2Max"] == snapshot.vo2_max
         assert body["fitnessAge"] == snapshot.fitness_age
         assert body["weightGrams"] == snapshot.weight_grams

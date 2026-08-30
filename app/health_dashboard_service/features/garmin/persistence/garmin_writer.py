@@ -29,11 +29,11 @@ async def upsert_daily_stat(pc: PersistenceController, stat: GarminDailyStat) ->
         INSERT INTO public."GarminDailyStats"
             ("Id", "StatDate", "Steps", "RestingHeartRate", "SleepSeconds", "PeakBodyBattery",
              "SleepScore", "HrvLastNightAverage", "HrvStatus", "TrainingReadinessScore",
-             "TrainingStatus", "Spo2Average", "Vo2Max", "FitnessAge", "WeightGrams",
+             "TrainingStatus", "Vo2Max", "FitnessAge", "WeightGrams",
              "IntensityMinutes", "UpdatedTimestamp")
         VALUES (:id, :stat_date, :steps, :resting_heart_rate, :sleep_seconds, :peak_body_battery,
                 :sleep_score, :hrv_last_night_average, :hrv_status, :training_readiness_score,
-                :training_status, :spo2_average, :vo2_max, :fitness_age, :weight_grams,
+                :training_status, :vo2_max, :fitness_age, :weight_grams,
                 :intensity_minutes, :updated_timestamp)
         ON CONFLICT ("StatDate") DO UPDATE SET
             "Steps" = EXCLUDED."Steps",
@@ -45,7 +45,6 @@ async def upsert_daily_stat(pc: PersistenceController, stat: GarminDailyStat) ->
             "HrvStatus" = EXCLUDED."HrvStatus",
             "TrainingReadinessScore" = EXCLUDED."TrainingReadinessScore",
             "TrainingStatus" = EXCLUDED."TrainingStatus",
-            "Spo2Average" = EXCLUDED."Spo2Average",
             "Vo2Max" = EXCLUDED."Vo2Max",
             "FitnessAge" = EXCLUDED."FitnessAge",
             "WeightGrams" = EXCLUDED."WeightGrams",
@@ -53,7 +52,7 @@ async def upsert_daily_stat(pc: PersistenceController, stat: GarminDailyStat) ->
             "UpdatedTimestamp" = EXCLUDED."UpdatedTimestamp"
         RETURNING "Id", "StatDate", "Steps", "RestingHeartRate", "SleepSeconds", "PeakBodyBattery",
                   "SleepScore", "HrvLastNightAverage", "HrvStatus", "TrainingReadinessScore",
-                  "TrainingStatus", "Spo2Average", "Vo2Max", "FitnessAge", "WeightGrams",
+                  "TrainingStatus", "Vo2Max", "FitnessAge", "WeightGrams",
                   "IntensityMinutes", "UpdatedTimestamp"
         """,
         {
@@ -68,7 +67,6 @@ async def upsert_daily_stat(pc: PersistenceController, stat: GarminDailyStat) ->
             "hrv_status": stat.HrvStatus,
             "training_readiness_score": stat.TrainingReadinessScore,
             "training_status": stat.TrainingStatus,
-            "spo2_average": stat.Spo2Average,
             "vo2_max": stat.Vo2Max,
             "fitness_age": stat.FitnessAge,
             "weight_grams": stat.WeightGrams,
