@@ -15,7 +15,7 @@ class AuthenticateGarminRequest(ApiModel):
 class GarminAuthenticateResponse(ApiModel):
     status: Literal["authenticated", "mfa_required"]
     mfa_session_id: UUID | None = Field(
-        None, description="Set only when status is mfa_required; submit to /garmin/authenticate/mfa"
+        None, description="Set only when status is mfa_required; submit to /authenticate-garmin-mfa"
     )
 
 
