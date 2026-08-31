@@ -9,6 +9,7 @@ from health_dashboard_service.contracts.garmin import (
     BatchUpsertGarminDailyStatsRequest,
     BatchUpsertGarminDailyStatsResponse,
     GarminDailyStatResponse,
+    GarminSessionResponse,
     SubmitGarminMfaRequest,
     UpsertGarminDailyStatRequest,
 )
@@ -17,6 +18,7 @@ from health_dashboard_service.features.garmin.domain.garmin_models import (
     GarminCredentialsModel,
     GarminDailyStatModel,
     GarminMfaSubmissionModel,
+    GarminSessionStatusModel,
     GarminTokenModel,
 )
 from health_dashboard_service.features.garmin.persistence.garmin_entities import (
@@ -57,6 +59,10 @@ class _GarminMfaSubmissionModelFactory(DataclassFactory[GarminMfaSubmissionModel
     __model__ = GarminMfaSubmissionModel
 
 
+class _GarminSessionStatusModelFactory(DataclassFactory[GarminSessionStatusModel]):
+    __model__ = GarminSessionStatusModel
+
+
 class _AuthenticateGarminRequestFactory(ModelFactory[AuthenticateGarminRequest]):
     __model__ = AuthenticateGarminRequest
 
@@ -87,6 +93,10 @@ class _BatchUpsertGarminDailyStatsResponseFactory(
     __model__ = BatchUpsertGarminDailyStatsResponse
 
 
+class _GarminSessionResponseFactory(ModelFactory[GarminSessionResponse]):
+    __model__ = GarminSessionResponse
+
+
 class GarminAutoFixture:
     _factories: ClassVar[dict[type, Any]] = {
         GarminToken: _GarminTokenFactory,
@@ -96,12 +106,14 @@ class GarminAutoFixture:
         GarminCredentialsModel: _GarminCredentialsModelFactory,
         GarminAuthenticationResultModel: _GarminAuthenticationResultModelFactory,
         GarminMfaSubmissionModel: _GarminMfaSubmissionModelFactory,
+        GarminSessionStatusModel: _GarminSessionStatusModelFactory,
         AuthenticateGarminRequest: _AuthenticateGarminRequestFactory,
         SubmitGarminMfaRequest: _SubmitGarminMfaRequestFactory,
         GarminDailyStatResponse: _GarminDailyStatResponseFactory,
         UpsertGarminDailyStatRequest: _UpsertGarminDailyStatRequestFactory,
         BatchUpsertGarminDailyStatsRequest: _BatchUpsertGarminDailyStatsRequestFactory,
         BatchUpsertGarminDailyStatsResponse: _BatchUpsertGarminDailyStatsResponseFactory,
+        GarminSessionResponse: _GarminSessionResponseFactory,
     }
 
     @staticmethod

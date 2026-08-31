@@ -8,6 +8,7 @@ from health_dashboard_service.contracts.garmin import (
 from health_dashboard_service.features.garmin.domain.garmin_models import (
     GarminAuthenticationResultModel,
     GarminDailyStatModel,
+    GarminSessionStatusModel,
     GarminTokenModel,
 )
 from health_dashboard_service.features.garmin.persistence.garmin_entities import (
@@ -45,6 +46,41 @@ class GarminMapperTests:
         assert result.TokenData == token_model.token_data
         assert result.CreatedTimestamp == token_model.created_timestamp
         assert result.UpdatedTimestamp == token_model.updated_timestamp
+
+    def test_can_map_from_persistence_GarminToken_to_domain_GarminSessionStatusModel(self):
+        token = GarminAutoFixture.generate(GarminToken)
+
+        result = mapper.map_from_persistence_to_domain_session_status(token)
+
+        assert result.authenticated is True
+        assert result.authenticated_at == token.UpdatedTimestamp
+
+    def test_can_map_from_persistence_no_token_to_domain_GarminSessionStatusModel(self):
+        result = mapper.map_from_persistence_to_domain_session_status(None)
+
+        assert result.authenticated is False
+        assert result.authenticated_at is None
+
+    def test_can_map_from_domain_GarminSessionStatusModel_to_response_GarminSessionResponse(self):
+        status_model = GarminSessionStatusModel(
+            authenticated=True,
+            authenticated_at=GarminAutoFixture.generate(GarminToken).UpdatedTimestamp,
+        )
+
+        result = mapper.map_from_domain_to_response_session_status(status_model)
+
+        assert result.status == "authenticated"
+        assert result.authenticated_at == status_model.authenticated_at
+
+    def test_can_map_from_domain_unauthenticated_GarminSessionStatusModel_to_response_GarminSessionResponse(  # noqa: E501
+        self,
+    ):
+        status_model = GarminSessionStatusModel(authenticated=False, authenticated_at=None)
+
+        result = mapper.map_from_domain_to_response_session_status(status_model)
+
+        assert result.status == "unauthenticated"
+        assert result.authenticated_at is None
 
     def test_can_map_from_persistence_GarminDailyStat_to_domain_GarminDailyStatModel(self):
         stat = GarminAutoFixture.generate(GarminDailyStat)

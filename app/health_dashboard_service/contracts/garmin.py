@@ -19,6 +19,13 @@ class GarminAuthenticateResponse(ApiModel):
     )
 
 
+class GarminSessionResponse(ApiModel):
+    status: Literal["authenticated", "unauthenticated"]
+    authenticated_at: datetime | None = Field(
+        None, description="Set only when status is authenticated; the session's last-updated time."
+    )
+
+
 class SubmitGarminMfaRequest(ApiModel):
     mfa_session_id: UUID
     code: str = Field(..., min_length=1, description="MFA code sent by Garmin Connect.")

@@ -31,6 +31,12 @@ class GarminTokenModel:
 
 
 @dataclass(frozen=True, slots=True)
+class GarminSessionStatusModel:
+    authenticated: bool
+    authenticated_at: datetime | None
+
+
+@dataclass(frozen=True, slots=True)
 class GarminDailyStatModel:
     id: UUID
     stat_date: date

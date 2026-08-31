@@ -21,6 +21,11 @@ async def authenticate_garmin(
     return await client.send(req)
 
 
+async def get_garmin_session(client: httpx.AsyncClient) -> httpx.Response:
+    req = BaseApiClient.get_base_request(client, "GET", "/garmin-session")
+    return await client.send(req)
+
+
 async def submit_garmin_mfa(
     client: httpx.AsyncClient, request: SubmitGarminMfaRequest
 ) -> httpx.Response:

@@ -11,6 +11,7 @@ from ..contracts.garmin import (
     BatchUpsertGarminDailyStatsResponse,
     GarminAuthenticateResponse,
     GarminDailyStatResponse,
+    GarminSessionResponse,
     SubmitGarminMfaRequest,
     UpsertGarminDailyStatRequest,
 )
@@ -128,6 +129,29 @@ def submit_garmin_mfa(body: SubmitGarminMfaRequest) -> None:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
     logger.info("submit_garmin_mfa succeeded")
+
+
+@router.get(
+    "/garmin-session",
+    summary="Report Garmin Connect session status",
+    description=(
+        "Reports whether a Garmin Connect session is currently stored, and if so, when it was "
+        "last established. Never includes credentials or the raw stored session token."
+    ),
+    tags=OAPI.GARMIN,
+    response_model=GarminSessionResponse,
+    responses={**OAPIResponses.SERVER_ERROR},
+)
+def get_garmin_session() -> GarminSessionResponse:
+    logger.info("get_garmin_session called")
+
+    status_model = asyncio.run(service.get_session_status())
+
+    logger.info(
+        "get_garmin_session succeeded",
+        extra={log_values.GARMIN_SESSION_AUTHENTICATED: status_model.authenticated},
+    )
+    return mapper.map_from_domain_to_response_session_status(status_model)
 
 
 @router.post(
