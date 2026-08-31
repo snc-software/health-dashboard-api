@@ -19,6 +19,7 @@ from .garmin_models import (
     GarminCredentialsModel,
     GarminDailyStatModel,
     GarminMfaSubmissionModel,
+    GarminSessionStatusModel,
     GarminTokenModel,
 )
 
@@ -85,6 +86,13 @@ async def _persist_token(token_data: str) -> None:
     async with create_scoped_persistence_controller() as pc:
         await writer.upsert_token(pc, mapper.map_from_domain_to_persistence_token(token_model))
         await pc.save_changes()
+
+
+async def get_session_status() -> GarminSessionStatusModel:
+    """Report whether a Garmin session is currently stored, without exposing the token."""
+    async with create_scoped_persistence_controller() as pc:
+        token = await reader.get_token(pc)
+        return mapper.map_from_persistence_to_domain_session_status(token)
 
 
 async def upsert_daily_stat(stat_date: date) -> GarminDailyStatModel:

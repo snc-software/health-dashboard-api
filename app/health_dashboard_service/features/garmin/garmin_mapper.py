@@ -7,6 +7,7 @@ from ...contracts.garmin import (
     BatchUpsertGarminDailyStatsResponse,
     GarminAuthenticateResponse,
     GarminDailyStatResponse,
+    GarminSessionResponse,
     SubmitGarminMfaRequest,
 )
 from .domain.garmin_models import (
@@ -14,6 +15,7 @@ from .domain.garmin_models import (
     GarminCredentialsModel,
     GarminDailyStatModel,
     GarminMfaSubmissionModel,
+    GarminSessionStatusModel,
     GarminTokenModel,
 )
 from .persistence.garmin_entities import GarminDailyStat, GarminToken
@@ -57,6 +59,25 @@ def map_from_domain_to_persistence_token(token_model: GarminTokenModel) -> Garmi
         TokenData=token_model.token_data,
         CreatedTimestamp=token_model.created_timestamp,
         UpdatedTimestamp=token_model.updated_timestamp,
+    )
+
+
+def map_from_persistence_to_domain_session_status(
+    token: GarminToken | None,
+) -> GarminSessionStatusModel:
+    """Map from persistence GarminToken (or absence of one) to domain GarminSessionStatusModel"""
+    if token is None:
+        return GarminSessionStatusModel(authenticated=False, authenticated_at=None)
+    return GarminSessionStatusModel(authenticated=True, authenticated_at=token.UpdatedTimestamp)
+
+
+def map_from_domain_to_response_session_status(
+    status_model: GarminSessionStatusModel,
+) -> GarminSessionResponse:
+    """Map from domain GarminSessionStatusModel to response GarminSessionResponse"""
+    return GarminSessionResponse(
+        status="authenticated" if status_model.authenticated else "unauthenticated",
+        authenticated_at=status_model.authenticated_at,
     )
 
 

@@ -9,6 +9,7 @@ from health_dashboard_service.contracts.garmin import (
     BatchUpsertGarminDailyStatsRequest,
     BatchUpsertGarminDailyStatsResponse,
     GarminDailyStatResponse,
+    GarminSessionResponse,
     SubmitGarminMfaRequest,
     UpsertGarminDailyStatRequest,
 )
@@ -75,3 +76,10 @@ class GarminContractTests:
         assert "weightGrams" in payload
         assert "intensityMinutes" in payload
         assert "updatedTimestamp" in payload
+
+    def test_session_response_should_serialise_as_camel_case(self):
+        response = GarminAutoFixture.generate(GarminSessionResponse)
+
+        payload = response.model_dump(by_alias=True)
+
+        assert "authenticatedAt" in payload
