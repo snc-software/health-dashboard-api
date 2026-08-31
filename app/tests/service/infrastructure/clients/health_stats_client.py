@@ -1,4 +1,4 @@
-"""Client wrapper for calling this service's own /daily-health-stats endpoint from tests."""
+"""Client wrapper for calling this service's own /start/{startDate}/end/{endDate}/health-stats endpoint from tests."""
 
 from datetime import date
 
