@@ -31,3 +31,21 @@ async def get_daily_stat_by_date(
         {"stat_date": stat_date},
     )
     return GarminDailyStat(**row) if row else None
+
+
+async def get_daily_stats_in_range(
+    pc: PersistenceController, start_date: date, end_date: date
+) -> list[GarminDailyStat]:
+    rows = await pc.query(
+        """
+        SELECT "Id", "StatDate", "Steps", "RestingHeartRate", "SleepSeconds", "PeakBodyBattery",
+               "SleepScore", "HrvLastNightAverage", "HrvStatus", "TrainingReadinessScore",
+               "TrainingStatus", "Vo2Max", "FitnessAge", "WeightGrams",
+               "IntensityMinutes", "UpdatedTimestamp"
+        FROM public."GarminDailyStats"
+        WHERE "StatDate" BETWEEN :start_date AND :end_date
+        ORDER BY "StatDate" ASC
+        """,
+        {"start_date": start_date, "end_date": end_date},
+    )
+    return [GarminDailyStat(**row) for row in rows]
