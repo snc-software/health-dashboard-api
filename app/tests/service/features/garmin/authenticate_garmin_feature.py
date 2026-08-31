@@ -1,4 +1,4 @@
-"""Service tests for POST /garmin/authenticate."""
+"""Service tests for POST /authenticate-garmin."""
 
 import uuid
 
@@ -48,7 +48,7 @@ class TestAuthenticateGarminFeature:
 
     async def test_authenticate_garmin_should_return_400_when_email_is_missing(self, api_client):
         # when
-        response = await api_client.post("/garmin/authenticate", json={"password": "hunter2"})
+        response = await api_client.post("/authenticate-garmin", json={"password": "hunter2"})
 
         # then
         assert_response_status(response, 400)

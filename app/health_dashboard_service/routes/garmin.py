@@ -59,12 +59,12 @@ _GARMIN_MFA_SESSION_UNKNOWN: Responses = {
 
 
 @router.post(
-    "/garmin/authenticate",
+    "/authenticate-garmin",
     summary="Authenticate against Garmin Connect",
     description=(
         "Starts a Garmin Connect login. Returns status=authenticated and stores the resulting "
         "session token in Postgres, or status=mfa_required with a session id to submit to "
-        "/garmin/authenticate/mfa if Garmin challenges for an MFA code. "
+        "/authenticate-garmin-mfa if Garmin challenges for an MFA code. "
         "The email/password are used once for this request and are never persisted."
     ),
     tags=OAPI.GARMIN,
@@ -96,10 +96,10 @@ def authenticate_garmin(body: AuthenticateGarminRequest) -> GarminAuthenticateRe
 
 
 @router.post(
-    "/garmin/authenticate/mfa",
+    "/authenticate-garmin-mfa",
     summary="Submit a Garmin Connect MFA code",
     description=(
-        "Completes a Garmin Connect login previously started by /garmin/authenticate that "
+        "Completes a Garmin Connect login previously started by /authenticate-garmin that "
         "returned status=mfa_required, persisting the resulting session token in Postgres."
     ),
     tags=OAPI.GARMIN,

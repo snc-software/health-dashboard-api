@@ -1,4 +1,4 @@
-"""Service tests for POST /garmin/authenticate/mfa."""
+"""Service tests for POST /authenticate-garmin-mfa."""
 
 import uuid
 
@@ -32,7 +32,7 @@ class TestSubmitGarminMfaFeature:
     async def test_submit_garmin_mfa_should_return_400_when_code_is_missing(self, api_client):
         # when
         response = await api_client.post(
-            "/garmin/authenticate/mfa", json={"mfaSessionId": str(uuid.uuid4())}
+            "/authenticate-garmin-mfa", json={"mfaSessionId": str(uuid.uuid4())}
         )
 
         # then

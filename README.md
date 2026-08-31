@@ -81,7 +81,7 @@ make docker-build && docker run -p 8000:8000 --env-file health_dashboard_service
 | `/openapi.json` | OpenAPI schema |
 | `/health` | Liveness — touches no dependencies |
 | `/health/ready` | Readiness — checks Postgres, 503 when unreachable |
-| `POST /garmin/authenticate` | Exchange Garmin credentials for a stored session token |
+| `POST /authenticate-garmin` | Exchange Garmin credentials for a stored session token |
 | `POST /garmin/refresh` | Pull and upsert one day's summary stats using the stored session |
 
 The app verifies database connectivity during startup, so bad credentials fail
