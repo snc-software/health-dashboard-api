@@ -157,6 +157,11 @@ jobs:
           docker run --rm -d --name smoke --network host \
             -e PG_HOST=127.0.0.1 -e PG_PORT=5432 -e PG_USER=postgres \
             -e PG_PASSWORD=postgres -e PG_DATABASE=health-dashboard-service \
+            -e STRAVA_CLIENT_ID=smoke-test-client-id \
+            -e STRAVA_CLIENT_SECRET=smoke-test-client-secret \
+            -e STRAVA_REDIRECT_URI=http://127.0.0.1:8000/strava-callback \
+            -e STRAVA_UI_REDIRECT_URL=http://127.0.0.1:5173/settings \
+            -e STRAVA_SCOPE='["read","activity:read_all"]' \
             health-dashboard-api:ci
 
           for _ in $(seq 1 30); do
