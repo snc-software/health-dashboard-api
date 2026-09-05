@@ -6,11 +6,13 @@ unit-test runs never require Docker/`goose`."""
 
 from tests.service.infrastructure.service_application import (  # noqa: F401
     _reset_garmin_tables,
+    _reset_strava_tables,
     api_client,
     garmin_daily_stat_persistence_provider,
     garmin_token_persistence_provider,
     postgres_container,
     postgres_engine,
     service_app,
+    strava_token_persistence_provider,
     test_settings,
 )

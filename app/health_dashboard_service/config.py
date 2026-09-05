@@ -44,6 +44,15 @@ class Settings(BaseSettings):
         300, description="How long a started Garmin MFA login stays pending before expiring"
     )
 
+    strava_client_id: str
+    strava_client_secret: str
+    strava_redirect_uri: str
+    strava_ui_redirect_url: str
+    strava_scope: list[str]
+    strava_state_ttl_seconds: int = Field(
+        300, description="How long a started Strava authorization stays pending before expiring"
+    )
+
     @property
     def is_production(self) -> bool:
         return self.environment.lower() == "production"

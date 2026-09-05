@@ -28,6 +28,11 @@ os.environ.setdefault("PG_HOST", "localhost")
 os.environ.setdefault("PG_USER", "test")
 os.environ.setdefault("PG_PASSWORD", "test")
 os.environ.setdefault("PG_DATABASE", "test")
+os.environ.setdefault("STRAVA_CLIENT_ID", "test-strava-client-id")
+os.environ.setdefault("STRAVA_CLIENT_SECRET", "test-strava-client-secret")
+os.environ.setdefault("STRAVA_REDIRECT_URI", "http://localhost:8000/strava-callback")
+os.environ.setdefault("STRAVA_UI_REDIRECT_URL", "http://localhost:5173/settings/strava")
+os.environ.setdefault("STRAVA_SCOPE", '["read","activity:read_all"]')
 
 from health_dashboard_service import config, main
 from tests.persistence_providers.garmin_daily_stat_persistence_provider import (
@@ -35,6 +40,9 @@ from tests.persistence_providers.garmin_daily_stat_persistence_provider import (
 )
 from tests.persistence_providers.garmin_token_persistence_provider import (
     GarminTokenPersistenceProvider,
+)
+from tests.persistence_providers.strava_token_persistence_provider import (
+    StravaTokenPersistenceProvider,
 )
 
 from .settings import build_test_engine, build_test_settings
@@ -89,6 +97,12 @@ async def _reset_garmin_tables(postgres_engine: AsyncEngine) -> None:
         )
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def _reset_strava_tables(postgres_engine: AsyncEngine) -> None:
+    async with postgres_engine.begin() as connection:
+        await connection.execute(text('TRUNCATE TABLE public."StravaTokens"'))
+
+
 @pytest.fixture
 def garmin_token_persistence_provider(
     postgres_engine: AsyncEngine,
@@ -101,6 +115,13 @@ def garmin_daily_stat_persistence_provider(
     postgres_engine: AsyncEngine,
 ) -> GarminDailyStatPersistenceProvider:
     return GarminDailyStatPersistenceProvider(postgres_engine)
+
+
+@pytest.fixture
+def strava_token_persistence_provider(
+    postgres_engine: AsyncEngine,
+) -> StravaTokenPersistenceProvider:
+    return StravaTokenPersistenceProvider(postgres_engine)
 
 
 @pytest_asyncio.fixture
