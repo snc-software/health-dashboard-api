@@ -13,6 +13,7 @@ from tests.service.infrastructure.service_application import (  # noqa: F401
     postgres_container,
     postgres_engine,
     service_app,
+    strava_activity_persistence_provider,
     strava_token_persistence_provider,
     test_settings,
 )

@@ -21,6 +21,8 @@ from ...config import get_settings
 _AUTHORIZE_URL = "https://www.strava.com/oauth/authorize"
 _TOKEN_URL = "https://www.strava.com/oauth/token"  # noqa: S105 — URL, not a credential
 _ATHLETE_URL = "https://www.strava.com/api/v3/athlete"
+_ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
+_ACTIVITIES_PAGE_SIZE = 200
 
 
 class StravaClientAuthenticationError(Exception):
@@ -38,6 +40,30 @@ class StravaTokenExchangeResult:
     expires_at: datetime
     athlete_id: int
     scope: str
+
+
+@dataclass(frozen=True, slots=True)
+class StravaTokenRefreshResult:
+    access_token: str
+    refresh_token: str
+    expires_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class StravaActivitySummaryDTO:
+    id: int
+    name: str
+    type: str
+    sport_type: str
+    start_date: datetime
+    start_date_local: datetime
+    distance: float
+    moving_time: int
+    elapsed_time: int
+    total_elevation_gain: float
+    average_heartrate: float | None
+    max_heartrate: float | None
+    gear_id: str | None
 
 
 # Pending Strava authorizations waiting on their callback, keyed by the generated
@@ -74,9 +100,11 @@ def consume_pending_state(state: str) -> bool:
     return _pop_pending_state(state)
 
 
-async def exchange_code_for_token(code: str) -> StravaTokenExchangeResult:
-    """Exchange an authorization code for tokens. Raises StravaClientAuthenticationError
-    if Strava rejects the code, StravaClientConnectionError on any other failure."""
+async def _post_to_token_endpoint(data: dict[str, str], *, rejection_message: str) -> dict:
+    """POST to Strava's /oauth/token endpoint (shared by an authorization-code exchange and
+    a refresh-token exchange) and return the parsed JSON body. Raises
+    StravaClientAuthenticationError if Strava rejects the code/token, StravaClientConnectionError
+    on any other failure."""
     settings = get_settings()
     async with httpx.AsyncClient() as client:
         try:
@@ -85,21 +113,29 @@ async def exchange_code_for_token(code: str) -> StravaTokenExchangeResult:
                 data={
                     "client_id": settings.strava_client_id,
                     "client_secret": settings.strava_client_secret,
-                    "code": code,
-                    "grant_type": "authorization_code",
+                    **data,
                 },
             )
         except httpx.HTTPError as exc:
             raise StravaClientConnectionError(str(exc)) from exc
 
     if response.status_code in (400, 401):
-        raise StravaClientAuthenticationError("Strava rejected the supplied authorization code.")
+        raise StravaClientAuthenticationError(rejection_message)
     if response.status_code >= 400:
         raise StravaClientConnectionError(
-            f"Strava token exchange failed with status {response.status_code}."
+            f"Strava token endpoint failed with status {response.status_code}."
         )
+    return response.json()
 
-    body = response.json()
+
+async def exchange_code_for_token(code: str) -> StravaTokenExchangeResult:
+    """Exchange an authorization code for tokens. Raises StravaClientAuthenticationError
+    if Strava rejects the code, StravaClientConnectionError on any other failure."""
+    body = await _post_to_token_endpoint(
+        {"code": code, "grant_type": "authorization_code"},
+        rejection_message="Strava rejected the supplied authorization code.",
+    )
+
     athlete = body.get("athlete") or {}
     access_token = body.get("access_token")
     refresh_token = body.get("refresh_token")
@@ -115,6 +151,87 @@ async def exchange_code_for_token(code: str) -> StravaTokenExchangeResult:
         expires_at=datetime.fromtimestamp(expires_at, tz=UTC),
         athlete_id=athlete_id,
         scope=scope or "",
+    )
+
+
+async def refresh_access_token(refresh_token: str) -> StravaTokenRefreshResult:
+    """Exchange a stored refresh token for a new access token. Raises
+    StravaClientAuthenticationError if Strava rejects the refresh token,
+    StravaClientConnectionError on any other failure."""
+    body = await _post_to_token_endpoint(
+        {"refresh_token": refresh_token, "grant_type": "refresh_token"},
+        rejection_message="Strava rejected the stored refresh token.",
+    )
+
+    access_token = body.get("access_token")
+    new_refresh_token = body.get("refresh_token")
+    expires_at = body.get("expires_at")
+    if not access_token or not new_refresh_token or expires_at is None:
+        raise StravaClientConnectionError("Strava token refresh returned an unexpected response.")
+
+    return StravaTokenRefreshResult(
+        access_token=access_token,
+        refresh_token=new_refresh_token,
+        expires_at=datetime.fromtimestamp(expires_at, tz=UTC),
+    )
+
+
+async def list_activities(
+    access_token: str, *, after: int, before: int
+) -> list[StravaActivitySummaryDTO]:
+    """Fetch every activity Strava reports between the given epoch-second `after`/`before`
+    bounds, paginating at `_ACTIVITIES_PAGE_SIZE` per page until a short page signals the end.
+    Raises StravaClientAuthenticationError if Strava rejects the access token,
+    StravaClientConnectionError on any other failure."""
+    activities: list[StravaActivitySummaryDTO] = []
+    page = 1
+    async with httpx.AsyncClient() as client:
+        while True:
+            try:
+                response = await client.get(
+                    _ACTIVITIES_URL,
+                    headers={"Authorization": f"Bearer {access_token}"},
+                    params={
+                        "after": after,
+                        "before": before,
+                        "page": page,
+                        "per_page": _ACTIVITIES_PAGE_SIZE,
+                    },
+                )
+            except httpx.HTTPError as exc:
+                raise StravaClientConnectionError(str(exc)) from exc
+
+            if response.status_code == 401:
+                raise StravaClientAuthenticationError("Strava rejected the supplied access token.")
+            if response.status_code >= 400:
+                raise StravaClientConnectionError(
+                    f"Strava list activities failed with status {response.status_code}."
+                )
+
+            page_activities = [_parse_activity_summary(item) for item in response.json()]
+            activities.extend(page_activities)
+            if len(page_activities) < _ACTIVITIES_PAGE_SIZE:
+                break
+            page += 1
+
+    return activities
+
+
+def _parse_activity_summary(item: dict) -> StravaActivitySummaryDTO:
+    return StravaActivitySummaryDTO(
+        id=item["id"],
+        name=item["name"],
+        type=item["type"],
+        sport_type=item["sport_type"],
+        start_date=datetime.fromisoformat(item["start_date"]),
+        start_date_local=datetime.fromisoformat(item["start_date_local"]),
+        distance=item["distance"],
+        moving_time=item["moving_time"],
+        elapsed_time=item["elapsed_time"],
+        total_elevation_gain=item["total_elevation_gain"],
+        average_heartrate=item.get("average_heartrate"),
+        max_heartrate=item.get("max_heartrate"),
+        gear_id=item.get("gear_id"),
     )
 
 

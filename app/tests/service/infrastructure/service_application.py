@@ -41,6 +41,9 @@ from tests.persistence_providers.garmin_daily_stat_persistence_provider import (
 from tests.persistence_providers.garmin_token_persistence_provider import (
     GarminTokenPersistenceProvider,
 )
+from tests.persistence_providers.strava_activity_persistence_provider import (
+    StravaActivityPersistenceProvider,
+)
 from tests.persistence_providers.strava_token_persistence_provider import (
     StravaTokenPersistenceProvider,
 )
@@ -100,7 +103,9 @@ async def _reset_garmin_tables(postgres_engine: AsyncEngine) -> None:
 @pytest_asyncio.fixture(autouse=True)
 async def _reset_strava_tables(postgres_engine: AsyncEngine) -> None:
     async with postgres_engine.begin() as connection:
-        await connection.execute(text('TRUNCATE TABLE public."StravaTokens"'))
+        await connection.execute(
+            text('TRUNCATE TABLE public."StravaTokens", public."StravaActivities"')
+        )
 
 
 @pytest.fixture
@@ -122,6 +127,13 @@ def strava_token_persistence_provider(
     postgres_engine: AsyncEngine,
 ) -> StravaTokenPersistenceProvider:
     return StravaTokenPersistenceProvider(postgres_engine)
+
+
+@pytest.fixture
+def strava_activity_persistence_provider(
+    postgres_engine: AsyncEngine,
+) -> StravaActivityPersistenceProvider:
+    return StravaActivityPersistenceProvider(postgres_engine)
 
 
 @pytest_asyncio.fixture

@@ -4,7 +4,11 @@
 endpoints' `Location` header and status code can be asserted directly.
 """
 
+from datetime import date
+
 import httpx
+
+from health_dashboard_service.contracts.strava import FetchStravaActivitiesRequest
 
 from .base_api_client import BaseApiClient
 
@@ -33,4 +37,34 @@ async def strava_callback(
 
 async def get_strava_session(client: httpx.AsyncClient) -> httpx.Response:
     req = BaseApiClient.get_base_request(client, "GET", "/strava-session")
+    return await client.send(req)
+
+
+async def fetch_strava_activities(
+    client: httpx.AsyncClient, request: FetchStravaActivitiesRequest
+) -> httpx.Response:
+    payload = request.model_dump(by_alias=True, mode="json")
+    req = BaseApiClient.get_base_request(client, "POST", "/strava-activities", json=payload)
+    return await client.send(req)
+
+
+async def get_strava_activities(
+    client: httpx.AsyncClient, start_date: date, end_date: date
+) -> httpx.Response:
+    req = BaseApiClient.get_base_request(
+        client,
+        "GET",
+        f"/start/{start_date.isoformat()}/end/{end_date.isoformat()}/activities",
+    )
+    return await client.send(req)
+
+
+async def get_strava_activity_summary(
+    client: httpx.AsyncClient, start_date: date, end_date: date
+) -> httpx.Response:
+    req = BaseApiClient.get_base_request(
+        client,
+        "GET",
+        f"/start/{start_date.isoformat()}/end/{end_date.isoformat()}/activity-summary",
+    )
     return await client.send(req)

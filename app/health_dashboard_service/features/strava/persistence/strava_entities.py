@@ -17,3 +17,29 @@ class StravaToken:
     Scope: str
     CreatedTimestamp: datetime
     UpdatedTimestamp: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class StravaActivity:
+    Id: UUID
+    StravaActivityId: int
+    Name: str
+    Type: str
+    SportType: str
+    StartDate: datetime
+    StartDateLocal: datetime
+    DistanceMetres: float
+    MovingTimeSeconds: int
+    ElapsedTimeSeconds: int
+    TotalElevationGainMetres: float
+    AverageHeartrate: float | None
+    MaxHeartrate: float | None
+    GearId: str | None
+    UpdatedTimestamp: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class StravaActivityStatsRow:
+    TotalActivities: int
+    TotalRunDistanceMetres: float
+    TotalRunMovingTimeSeconds: int
