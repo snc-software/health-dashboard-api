@@ -27,7 +27,6 @@ class StravaActivityModel:
     id: UUID
     strava_activity_id: int
     name: str
-    type: str
     sport_type: str
     start_date: datetime
     start_date_local: datetime

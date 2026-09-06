@@ -35,7 +35,7 @@ logger = logging.getLogger("strava")
 router = APIRouter()
 
 _STRAVA_NO_SESSION: Responses = {
-    status.HTTP_409_CONFLICT: {
+    status.HTTP_400_BAD_REQUEST: {
         "model": ProblemDetails,
         "description": "No Strava session has been established yet",
     }
@@ -144,8 +144,8 @@ async def get_strava_session() -> StravaSessionResponse:
     summary="Fetch and store Strava activities for a date range",
     description=(
         "Uses the stored Strava session (refreshing the access token if needed) to fetch "
-        "activities for the inclusive start_date/end_date range of local activity dates and "
-        "upsert them into Postgres, returning a count of the synced activities by type."
+        "activities for the inclusive start_date/end_date range in UTC and upsert them into "
+        "Postgres, returning a count of the synced activities by type."
     ),
     tags=OAPI.STRAVA,
     response_model=FetchStravaActivitiesResponse,
@@ -169,7 +169,7 @@ async def fetch_strava_activities(
         counts_by_type = await service.fetch_activities(body.start_date, body.end_date)
     except StravaSessionNotFoundError as exc:
         logger.info("fetch_strava_activities has no stored session")
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except StravaAuthenticationError as exc:
         logger.info("fetch_strava_activities rejected by Strava")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc

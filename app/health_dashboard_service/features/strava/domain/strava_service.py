@@ -1,5 +1,5 @@
 from collections import Counter
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from uuid import uuid7
 
 from ....infrastructure.postgres.persistence_controller import PersistenceController
@@ -106,25 +106,14 @@ async def get_session_status() -> StravaSessionStatusModel:
 
 async def fetch_activities(start_date: date, end_date: date) -> dict[str, int]:
     """Use the stored Strava session (refreshing the access token if needed) to fetch
-    activities covering the inclusive start_date/end_date range of *local* activity dates,
-    upsert them, and return a count of the synced activities by type."""
+    activities covering the inclusive start_date/end_date range in UTC (start_date at
+    00:00:00 UTC, end_date at 23:59:59 UTC), upsert them, and return a count of the synced
+    activities by type."""
     async with create_persistence_controller() as pc:
         access_token = await _get_valid_access_token(pc)
 
-        # Strava's after/before filter compares against each activity's UTC start_date, not
-        # its start_date_local, so the fetch window is padded a day on each side to guarantee
-        # every activity whose *local* date falls in range is retrieved regardless of the
-        # athlete's timezone offset; the padding is then trimmed back out below.
-        after = int(
-            datetime.combine(
-                start_date - timedelta(days=1), datetime.min.time(), tzinfo=UTC
-            ).timestamp()
-        )
-        before = int(
-            datetime.combine(
-                end_date + timedelta(days=2), datetime.min.time(), tzinfo=UTC
-            ).timestamp()
-        )
+        after = int(datetime.combine(start_date, time.min, tzinfo=UTC).timestamp())
+        before = int(datetime.combine(end_date, time.max, tzinfo=UTC).timestamp())
         try:
             dtos = await client.list_activities(access_token, after=after, before=before)
         except StravaClientAuthenticationError as exc:
@@ -132,7 +121,7 @@ async def fetch_activities(start_date: date, end_date: date) -> dict[str, int]:
         except StravaClientConnectionError as exc:
             raise StravaServiceError(str(exc)) from exc
 
-        in_range = [dto for dto in dtos if start_date <= dto.start_date_local.date() <= end_date]
+        in_range = [dto for dto in dtos if start_date <= dto.start_date.date() <= end_date]
 
         now = datetime.now(UTC)
         activity_models = [
@@ -145,7 +134,7 @@ async def fetch_activities(start_date: date, end_date: date) -> dict[str, int]:
         saved = await writer.upsert_activities(pc, rows)
         await pc.save_changes()
 
-    return dict(Counter(row.Type for row in saved))
+    return dict(Counter(row.SportType for row in saved))
 
 
 async def get_activities(start_date: date, end_date: date) -> list[StravaActivityModel]:

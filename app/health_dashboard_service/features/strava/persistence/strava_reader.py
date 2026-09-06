@@ -27,7 +27,7 @@ async def get_activities_in_range(
 ) -> list[StravaActivity]:
     rows = await pc.query(
         """
-        SELECT "Id", "StravaActivityId", "Name", "Type", "SportType", "StartDate",
+        SELECT "Id", "StravaActivityId", "Name", "SportType", "StartDate",
                "StartDateLocal", "DistanceMetres", "MovingTimeSeconds", "ElapsedTimeSeconds",
                "TotalElevationGainMetres", "AverageHeartrate", "MaxHeartrate", "GearId",
                "UpdatedTimestamp"

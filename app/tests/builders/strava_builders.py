@@ -22,7 +22,7 @@ from health_dashboard_service.features.strava.persistence.strava_entities import
     StravaActivityStatsRow,
     StravaToken,
 )
-from health_dashboard_service.infrastructure.strava.strava_client import StravaActivitySummaryDTO
+from health_dashboard_service.infrastructure.strava.strava_client import StravaActivitySummary
 
 __all__ = ["StravaAutoFixture"]
 
@@ -81,8 +81,8 @@ class _StravaActivitySummaryResponseFactory(ModelFactory[StravaActivitySummaryRe
     __model__ = StravaActivitySummaryResponse
 
 
-class _StravaActivitySummaryDTOFactory(DataclassFactory[StravaActivitySummaryDTO]):
-    __model__ = StravaActivitySummaryDTO
+class _StravaActivitySummaryFactory(DataclassFactory[StravaActivitySummary]):
+    __model__ = StravaActivitySummary
 
 
 class StravaAutoFixture:
@@ -100,7 +100,7 @@ class StravaAutoFixture:
         StravaActivityResponse: _StravaActivityResponseFactory,
         FetchStravaActivitiesResponse: _FetchStravaActivitiesResponseFactory,
         StravaActivitySummaryResponse: _StravaActivitySummaryResponseFactory,
-        StravaActivitySummaryDTO: _StravaActivitySummaryDTOFactory,
+        StravaActivitySummary: _StravaActivitySummaryFactory,
     }
 
     @staticmethod

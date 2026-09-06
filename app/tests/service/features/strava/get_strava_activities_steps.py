@@ -31,7 +31,6 @@ async def an_activity_is_stored(
         "Id": uuid7(),
         "StravaActivityId": strava_activity_id,
         "Name": "Morning Run",
-        "Type": "Run",
         "SportType": "Run",
         "StartDate": start_date if start_date is not None else start_date_local,
         "StartDateLocal": start_date_local,

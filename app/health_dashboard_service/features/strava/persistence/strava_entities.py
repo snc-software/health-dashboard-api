@@ -24,7 +24,6 @@ class StravaActivity:
     Id: UUID
     StravaActivityId: int
     Name: str
-    Type: str
     SportType: str
     StartDate: datetime
     StartDateLocal: datetime

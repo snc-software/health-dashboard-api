@@ -50,7 +50,7 @@ class StravaTokenRefreshResult:
 
 
 @dataclass(frozen=True, slots=True)
-class StravaActivitySummaryDTO:
+class StravaActivitySummary:
     id: int
     name: str
     type: str
@@ -178,12 +178,12 @@ async def refresh_access_token(refresh_token: str) -> StravaTokenRefreshResult:
 
 async def list_activities(
     access_token: str, *, after: int, before: int
-) -> list[StravaActivitySummaryDTO]:
+) -> list[StravaActivitySummary]:
     """Fetch every activity Strava reports between the given epoch-second `after`/`before`
     bounds, paginating at `_ACTIVITIES_PAGE_SIZE` per page until a short page signals the end.
     Raises StravaClientAuthenticationError if Strava rejects the access token,
     StravaClientConnectionError on any other failure."""
-    activities: list[StravaActivitySummaryDTO] = []
+    activities: list[StravaActivitySummary] = []
     page = 1
     async with httpx.AsyncClient() as client:
         while True:
@@ -217,8 +217,8 @@ async def list_activities(
     return activities
 
 
-def _parse_activity_summary(item: dict) -> StravaActivitySummaryDTO:
-    return StravaActivitySummaryDTO(
+def _parse_activity_summary(item: dict) -> StravaActivitySummary:
+    return StravaActivitySummary(
         id=item["id"],
         name=item["name"],
         type=item["type"],

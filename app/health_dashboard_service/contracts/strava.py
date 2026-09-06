@@ -17,8 +17,12 @@ class StravaSessionResponse(ApiModel):
 
 
 class FetchStravaActivitiesRequest(ApiModel):
-    start_date: date = Field(..., description="First date (inclusive) to fetch activities for.")
-    end_date: date = Field(..., description="Last date (inclusive) to fetch activities for.")
+    start_date: date = Field(
+        ..., description="First date (inclusive), in UTC, to fetch activities for."
+    )
+    end_date: date = Field(
+        ..., description="Last date (inclusive), in UTC, to fetch activities for."
+    )
 
     @model_validator(mode="after")
     def check_end_date_not_before_start_date(self) -> Self:
@@ -52,7 +56,6 @@ class GetStravaActivitiesRequest(ApiModel):
 class StravaActivityResponse(ApiModel):
     strava_activity_id: int = Field(..., description="Strava's own activity id.")
     name: str
-    type: str = Field(..., description="Strava's legacy type field.")
     sport_type: str = Field(..., description="Strava's sport_type field.")
     start_date: datetime = Field(
         ..., description="UTC instant — the moment the activity started, in UTC."

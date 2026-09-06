@@ -66,14 +66,14 @@ class TestUpsertGarminDailyStatFeature:
             garmin_daily_stat_persistence_provider, stat_date, snapshot
         )
 
-    async def test_upsert_garmin_daily_stat_should_return_409_when_no_session_has_been_established(
+    async def test_upsert_garmin_daily_stat_should_return_400_when_no_session_has_been_established(
         self, api_client
     ):
         # when
         response = await upsert_garmin_daily_stat(api_client, date(2026, 8, 20))
 
         # then
-        assert_response_status(response, 409)
+        assert_response_status(response, 400)
 
     async def test_upsert_garmin_daily_stat_should_return_502_when_garmin_is_unreachable(
         self, api_client, mocker, garmin_token_persistence_provider

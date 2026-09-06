@@ -10,7 +10,7 @@ from ...contracts.strava import (
     StravaActivitySummaryResponse,
     StravaSessionResponse,
 )
-from ...infrastructure.strava.strava_client import StravaActivitySummaryDTO
+from ...infrastructure.strava.strava_client import StravaActivitySummary
 from .domain.strava_models import (
     StravaActivityModel,
     StravaActivityPeriodStatsModel,
@@ -73,14 +73,13 @@ def map_from_domain_to_response_session_status(
 
 
 def map_from_client_to_domain_activity(
-    dto: StravaActivitySummaryDTO, *, activity_id: UUID, updated_timestamp: datetime
+    dto: StravaActivitySummary, *, activity_id: UUID, updated_timestamp: datetime
 ) -> StravaActivityModel:
-    """Map from Strava client StravaActivitySummaryDTO to domain StravaActivityModel"""
+    """Map from Strava client StravaActivitySummary to domain StravaActivityModel"""
     return StravaActivityModel(
         id=activity_id,
         strava_activity_id=dto.id,
         name=dto.name,
-        type=dto.type,
         sport_type=dto.sport_type,
         start_date=dto.start_date,
         start_date_local=dto.start_date_local,
@@ -101,7 +100,6 @@ def map_from_persistence_to_domain_activity(activity: StravaActivity) -> StravaA
         id=activity.Id,
         strava_activity_id=activity.StravaActivityId,
         name=activity.Name,
-        type=activity.Type,
         sport_type=activity.SportType,
         start_date=activity.StartDate,
         start_date_local=activity.StartDateLocal,
@@ -122,7 +120,6 @@ def map_from_domain_to_persistence_activity(activity_model: StravaActivityModel)
         Id=activity_model.id,
         StravaActivityId=activity_model.strava_activity_id,
         Name=activity_model.name,
-        Type=activity_model.type,
         SportType=activity_model.sport_type,
         StartDate=activity_model.start_date,
         StartDateLocal=activity_model.start_date_local,
@@ -144,7 +141,6 @@ def map_from_domain_to_response_activity(
     return StravaActivityResponse(
         strava_activity_id=activity_model.strava_activity_id,
         name=activity_model.name,
-        type=activity_model.type,
         sport_type=activity_model.sport_type,
         start_date=activity_model.start_date,
         start_date_local=activity_model.start_date_local,

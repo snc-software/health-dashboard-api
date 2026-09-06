@@ -14,17 +14,16 @@ class StravaActivityPersistenceProvider:
         sql = text(
             """
             INSERT INTO public."StravaActivities"
-                ("Id", "StravaActivityId", "Name", "Type", "SportType", "StartDate",
+                ("Id", "StravaActivityId", "Name", "SportType", "StartDate",
                  "StartDateLocal", "DistanceMetres", "MovingTimeSeconds", "ElapsedTimeSeconds",
                  "TotalElevationGainMetres", "AverageHeartrate", "MaxHeartrate", "GearId",
                  "UpdatedTimestamp")
-            VALUES (:id, :strava_activity_id, :name, :type, :sport_type, :start_date,
+            VALUES (:id, :strava_activity_id, :name, :sport_type, :start_date,
                     :start_date_local, :distance_metres, :moving_time_seconds,
                     :elapsed_time_seconds, :total_elevation_gain_metres, :average_heartrate,
                     :max_heartrate, :gear_id, :updated_timestamp)
             ON CONFLICT ("StravaActivityId") DO UPDATE SET
                 "Name" = EXCLUDED."Name",
-                "Type" = EXCLUDED."Type",
                 "SportType" = EXCLUDED."SportType",
                 "StartDate" = EXCLUDED."StartDate",
                 "StartDateLocal" = EXCLUDED."StartDateLocal",
@@ -45,7 +44,6 @@ class StravaActivityPersistenceProvider:
                     "id": activity.Id,
                     "strava_activity_id": activity.StravaActivityId,
                     "name": activity.Name,
-                    "type": activity.Type,
                     "sport_type": activity.SportType,
                     "start_date": activity.StartDate,
                     "start_date_local": activity.StartDateLocal,
@@ -63,7 +61,7 @@ class StravaActivityPersistenceProvider:
     async def get_by_strava_activity_id(self, strava_activity_id: int) -> StravaActivity | None:
         sql = text(
             """
-            SELECT "Id", "StravaActivityId", "Name", "Type", "SportType", "StartDate",
+            SELECT "Id", "StravaActivityId", "Name", "SportType", "StartDate",
                    "StartDateLocal", "DistanceMetres", "MovingTimeSeconds", "ElapsedTimeSeconds",
                    "TotalElevationGainMetres", "AverageHeartrate", "MaxHeartrate", "GearId",
                    "UpdatedTimestamp"

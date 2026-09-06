@@ -3,7 +3,6 @@ CREATE TABLE IF NOT EXISTS public."StravaActivities" (
     "Id" UUID PRIMARY KEY,
     "StravaActivityId" BIGINT NOT NULL,
     "Name" TEXT NOT NULL,
-    "Type" TEXT NOT NULL,
     "SportType" TEXT NOT NULL,
     "StartDate" TIMESTAMPTZ NOT NULL,
     "StartDateLocal" TIMESTAMPTZ NOT NULL,

@@ -147,7 +147,7 @@ class TestBatchUpsertGarminDailyStatsFeature:
             garmin_daily_stat_persistence_provider, end_date, snapshot
         )
 
-    async def test_batch_upsert_garmin_daily_stats_should_return_409_when_no_session_has_been_established(  # noqa: E501
+    async def test_batch_upsert_garmin_daily_stats_should_return_400_when_no_session_has_been_established(  # noqa: E501
         self, api_client, mocker
     ):
         # given
@@ -159,7 +159,7 @@ class TestBatchUpsertGarminDailyStatsFeature:
         )
 
         # then
-        assert_response_status(response, 409)
+        assert_response_status(response, 400)
         fetch_daily_snapshot.assert_not_called()
 
     async def test_batch_upsert_garmin_daily_stats_should_overwrite_existing_row_when_date_already_stored(  # noqa: E501

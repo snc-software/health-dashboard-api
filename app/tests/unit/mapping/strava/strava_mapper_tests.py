@@ -13,7 +13,7 @@ from health_dashboard_service.features.strava.persistence.strava_entities import
     StravaActivityStatsRow,
     StravaToken,
 )
-from health_dashboard_service.infrastructure.strava.strava_client import StravaActivitySummaryDTO
+from health_dashboard_service.infrastructure.strava.strava_client import StravaActivitySummary
 from tests.builders.strava_builders import StravaAutoFixture
 
 
@@ -88,8 +88,8 @@ class StravaMapperTests:
         assert result.athlete_id is None
         assert result.updated_timestamp is None
 
-    def test_can_map_from_client_StravaActivitySummaryDTO_to_domain_StravaActivityModel(self):
-        dto = StravaAutoFixture.generate(StravaActivitySummaryDTO)
+    def test_can_map_from_client_StravaActivitySummary_to_domain_StravaActivityModel(self):
+        dto = StravaAutoFixture.generate(StravaActivitySummary)
         activity_id = uuid7()
         updated_timestamp = datetime.now(UTC)
 
@@ -101,7 +101,6 @@ class StravaMapperTests:
         assert result.updated_timestamp == updated_timestamp
         assert result.strava_activity_id == dto.id
         assert result.name == dto.name
-        assert result.type == dto.type
         assert result.sport_type == dto.sport_type
         assert result.start_date == dto.start_date
         assert result.start_date_local == dto.start_date_local
@@ -121,7 +120,6 @@ class StravaMapperTests:
         assert result.id == activity.Id
         assert result.strava_activity_id == activity.StravaActivityId
         assert result.name == activity.Name
-        assert result.type == activity.Type
         assert result.sport_type == activity.SportType
         assert result.start_date == activity.StartDate
         assert result.start_date_local == activity.StartDateLocal
@@ -142,7 +140,6 @@ class StravaMapperTests:
         assert result.Id == activity_model.id
         assert result.StravaActivityId == activity_model.strava_activity_id
         assert result.Name == activity_model.name
-        assert result.Type == activity_model.type
         assert result.SportType == activity_model.sport_type
         assert result.StartDate == activity_model.start_date
         assert result.StartDateLocal == activity_model.start_date_local
@@ -162,7 +159,6 @@ class StravaMapperTests:
 
         assert result.strava_activity_id == activity_model.strava_activity_id
         assert result.name == activity_model.name
-        assert result.type == activity_model.type
         assert result.sport_type == activity_model.sport_type
         assert result.start_date == activity_model.start_date
         assert result.start_date_local == activity_model.start_date_local

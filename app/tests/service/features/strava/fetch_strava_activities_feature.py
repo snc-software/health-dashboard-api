@@ -91,14 +91,14 @@ class TestFetchStravaActivitiesFeature:
         assert stored_token.AccessToken == "refreshed-access-token"
         assert stored_token.RefreshToken == "refreshed-refresh-token"
 
-    async def test_fetch_strava_activities_should_return_409_when_no_strava_session_has_been_established(  # noqa: E501
+    async def test_fetch_strava_activities_should_return_400_when_no_strava_session_has_been_established(  # noqa: E501
         self, api_client, respx_mock
     ):
         # when
         response = await fetch_strava_activities(api_client, date(2026, 8, 20), date(2026, 8, 22))
 
         # then
-        assert_response_status(response, 409)
+        assert_response_status(response, 400)
         assert len(respx_mock.calls) == 0
 
     async def test_fetch_strava_activities_should_overwrite_an_existing_activity_row_when_synced_again(  # noqa: E501

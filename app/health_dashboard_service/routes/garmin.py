@@ -39,7 +39,7 @@ _GARMIN_UNAUTHORIZED: Responses = {
     }
 }
 _GARMIN_NO_SESSION: Responses = {
-    status.HTTP_409_CONFLICT: {
+    status.HTTP_400_BAD_REQUEST: {
         "model": ProblemDetails,
         "description": "No Garmin session has been established yet",
     }
@@ -177,7 +177,7 @@ def upsert_garmin_daily_stat(body: UpsertGarminDailyStatRequest) -> GarminDailyS
         stat = asyncio.run(service.upsert_daily_stat(body.stat_date))
     except GarminSessionNotFoundError as exc:
         logger.info("upsert_garmin_daily_stat has no stored session")
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except GarminServiceError as exc:
         logger.warning("upsert_garmin_daily_stat failed: Garmin unreachable")
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
@@ -214,7 +214,7 @@ def batch_upsert_garmin_daily_stats(
         failed_dates = asyncio.run(service.upsert_daily_stats_range(body.start_date, body.end_date))
     except GarminSessionNotFoundError as exc:
         logger.info("batch_upsert_garmin_daily_stats has no stored session")
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     if failed_dates:
         logger.warning(
